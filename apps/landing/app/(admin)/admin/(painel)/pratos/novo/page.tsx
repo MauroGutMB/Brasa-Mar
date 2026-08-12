@@ -1,3 +1,5 @@
+import { getDishCategories } from "@brasamar/db";
+
 import { DishForm } from "@/components/admin/dish-form";
 import { PageHeader } from "@/components/admin/page-header";
 import { VoltarPara } from "@/components/admin/voltar-para";
@@ -8,6 +10,7 @@ export const instant = false;
 
 export default async function NovoPratoPage() {
   await requireAdmin();
+  const categories = await getDishCategories();
 
   return (
     <>
@@ -16,7 +19,7 @@ export default async function NovoPratoPage() {
         titulo="Novo prato"
         descricao="Ele entra no fim do cardápio; a ordem pode ser ajustada na lista."
       />
-      <DishForm />
+      <DishForm categories={categories} />
     </>
   );
 }

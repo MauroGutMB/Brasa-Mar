@@ -1,17 +1,11 @@
-import type { Dish, DishTag } from "@brasamar/db";
+import type { DishWithCategory } from "@brasamar/db";
 import { Card, Heading, Text } from "@brasamar/ui";
 
 import { ImageSlot } from "@/components/shared/image-slot";
-import { dishCaption, dishTagLabels, formatPrice } from "@/lib/site";
-
-const tagClasses: Record<DishTag, string> = {
-  carnes: "bg-brasa-500/20 text-brasa-400",
-  mar: "bg-mar-500/20 text-mar-300",
-  "para-dividir": "bg-creme/10 text-creme/70",
-};
+import { categoryBadgeStyle, dishCaption, formatPrice } from "@/lib/site";
 
 export interface DishCardProps {
-  dish: Dish;
+  dish: DishWithCategory;
   /** Vem de site_settings.showPrices — o admin liga e desliga o cardápio todo. */
   showPrice: boolean;
 }
@@ -43,9 +37,10 @@ export function DishCard({ dish, showPrice }: DishCardProps) {
         </Text>
 
         <span
-          className={`mt-auto self-start rounded px-2.5 py-[5px] text-[10px] uppercase tracking-[0.24em] ${tagClasses[dish.tag]}`}
+          style={categoryBadgeStyle(dish.category.color)}
+          className="mt-auto self-start rounded px-2.5 py-[5px] text-[10px] uppercase tracking-[0.24em]"
         >
-          {dishTagLabels[dish.tag]}
+          {dish.category.name}
         </span>
       </div>
     </Card>

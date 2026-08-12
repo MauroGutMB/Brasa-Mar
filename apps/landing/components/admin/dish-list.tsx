@@ -4,11 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useOptimistic, useTransition } from "react";
 
-import type { Dish } from "@brasamar/db";
+import type { DishWithCategory } from "@brasamar/db";
 import { Button, cn } from "@brasamar/ui";
 
 import { reorderDishesAction, toggleDishAction } from "@/lib/actions/dishes";
-import { dishTagLabels, formatPrice } from "@/lib/site";
+import { categoryBadgeStyle, formatPrice } from "@/lib/site";
 
 /**
  * Lista de pratos do painel.
@@ -16,14 +16,14 @@ import { dishTagLabels, formatPrice } from "@/lib/site";
  * A ordem é mudada por botões de subir/descer em vez de arrastar: funciona no
  * teclado e no celular, e não precisa de biblioteca de drag and drop.
  */
-export function DishList({ dishes }: { dishes: Dish[] }) {
+export function DishList({ dishes }: { dishes: DishWithCategory[] }) {
   const [pendente, startTransition] = useTransition();
 
   // A reordenação aparece na hora; se a escrita falhar, o React devolve a
   // lista do servidor.
   const [ordem, aplicarOrdem] = useOptimistic(
     dishes,
-    (_atual: Dish[], nova: Dish[]) => nova,
+    (_atual: DishWithCategory[], nova: DishWithCategory[]) => nova,
   );
 
   function mover(indice: number, direcao: -1 | 1) {
@@ -85,8 +85,14 @@ export function DishList({ dishes }: { dishes: Dish[] }) {
                 </span>
               ) : null}
             </p>
-            <p className="mt-1 text-[13px] text-creme/45">
-              {formatPrice(dish.priceCents)} · {dishTagLabels[dish.tag]}
+            <p className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-creme/45">
+              {formatPrice(dish.priceCents)}
+              <span
+                style={categoryBadgeStyle(dish.category.color)}
+                className="rounded px-2 py-0.5 text-[10px] uppercase tracking-[0.16em]"
+              >
+                {dish.category.name}
+              </span>
             </p>
           </div>
 

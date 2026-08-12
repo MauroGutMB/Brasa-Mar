@@ -10,7 +10,6 @@ import {
   doublePrecision,
   integer,
   jsonb,
-  pgEnum,
   pgTable,
   smallint,
   text,
@@ -19,7 +18,26 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const dishTagEnum = pgEnum("dish_tag", ["carnes", "mar", "para-dividir"]);
+/**
+ * Categorias do cardápio ("Carnes", "Mar"…), gerenciadas pelo admin.
+ *
+ * Antes eram um enum fixo no banco, com nome e cor escritos no código. Viraram
+ * tabela para o dono poder criar, renomear e recolorir sem deploy.
+ *
+ * A cor é hex (`#e2571f`) e não um nome de token do Tailwind de propósito: o
+ * Tailwind extrai classes estaticamente no build, então `bg-${cor}-500` nunca
+ * existiria no CSS final. Guardando o valor, o badge aplica a cor inline.
+ */
+export const dishCategories = pgTable("dish_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 60 }).notNull(),
+  /** Cor do selo no cardápio, em hex com 6 dígitos. */
+  color: varchar("color", { length: 7 }).notNull().default("#e2571f"),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
 
 /** Item da lista de ocasiões do buffet ("Aniversários", "Casamentos"…). */
 export interface BuffetOccasion {
@@ -133,7 +151,9 @@ export const dishes = pgTable("dishes", {
   name: varchar("name", { length: 120 }).notNull(),
   priceCents: integer("price_cents").notNull(),
   description: text("description").notNull(),
-  tag: dishTagEnum("tag").notNull(),
+  categoryId: uuid("category_id")
+    .notNull()
+    .references(() => dishCategories.id, { onDelete: "restrict" }),
   imageUrl: text("image_url"),
   imageAlt: varchar("image_alt", { length: 200 }).notNull().default(""),
   /** Ordem de exibição no cardápio; menor aparece primeiro. */
@@ -161,10 +181,17 @@ export const adminUsers = pgTable("admin_users", {
     .defaultNow(),
 });
 
+export type DishCategory = typeof dishCategories.$inferSelect;
+export type NewDishCategory = typeof dishCategories.$inferInsert;
+
+/** Prato com a categoria já resolvida — o que a landing e o admin renderizam. */
+export interface DishWithCategory extends Dish {
+  category: DishCategory;
+}
+
 export type SiteSettings = typeof siteSettings.$inferSelect;
 export type SiteSettingsUpdate = Partial<typeof siteSettings.$inferInsert>;
 export type OpeningHour = typeof openingHours.$inferSelect;
 export type Dish = typeof dishes.$inferSelect;
 export type NewDish = typeof dishes.$inferInsert;
 export type AdminUser = typeof adminUsers.$inferSelect;
-export type DishTag = Dish["tag"];

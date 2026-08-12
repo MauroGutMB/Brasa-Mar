@@ -14,7 +14,7 @@ import {
   getOpeningHours as queryOpeningHours,
   getSiteSettings as querySiteSettings,
   getVisibleDishes as queryVisibleDishes,
-  type Dish,
+  type DishWithCategory,
   type OpeningHour,
   type SiteSettings,
 } from "@brasamar/db";
@@ -31,7 +31,7 @@ export async function getSettings(): Promise<SiteSettings> {
   return querySiteSettings();
 }
 
-export async function getDishes(): Promise<Dish[]> {
+export async function getDishes(): Promise<DishWithCategory[]> {
   "use cache";
   cacheTag(CACHE_TAGS.dishes);
   cacheLife("max");

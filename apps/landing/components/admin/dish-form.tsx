@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 
-import type { Dish } from "@brasamar/db";
+import type { DishCategory, DishWithCategory } from "@brasamar/db";
 import { slugify } from "@brasamar/db/validation";
 import { Field, Input, Select, Textarea, Toggle } from "@brasamar/ui";
 
@@ -12,18 +12,18 @@ import { Secao } from "@/components/admin/secao";
 import { createDishAction, updateDishAction } from "@/lib/actions/dishes";
 import { initialFormState } from "@/lib/actions/form-state";
 
-const TAGS = [
-  { value: "carnes", label: "Carnes" },
-  { value: "mar", label: "Mar" },
-  { value: "para-dividir", label: "Para dividir" },
-];
-
 /** Centavos → "89" / "89,50", que é como o campo aceita de volta. */
 function precoParaCampo(priceCents: number): string {
   return (priceCents / 100).toFixed(2).replace(".", ",").replace(",00", "");
 }
 
-export function DishForm({ dish }: { dish?: Dish }) {
+export interface DishFormProps {
+  dish?: DishWithCategory;
+  /** Opções do seletor — gerenciadas na lista de pratos. */
+  categories: DishCategory[];
+}
+
+export function DishForm({ dish, categories }: DishFormProps) {
   const action = dish
     ? updateDishAction.bind(null, dish)
     : createDishAction;
@@ -71,12 +71,22 @@ export function DishForm({ dish }: { dish?: Dish }) {
             )}
           </Field>
 
-          <Field label="Categoria" error={estado.errors?.tag} required>
+          <Field
+            label="Categoria"
+            error={estado.errors?.categoryId}
+            hint="Nome e cor se ajustam na lista de pratos."
+            required
+          >
             {(props) => (
-              <Select {...props} name="tag" defaultValue={dish?.tag ?? "carnes"}>
-                {TAGS.map((tag) => (
-                  <option key={tag.value} value={tag.value}>
-                    {tag.label}
+              <Select
+                {...props}
+                name="categoryId"
+                defaultValue={dish?.categoryId ?? categories[0]?.id}
+                required
+              >
+                {categories.map((categoria) => (
+                  <option key={categoria.id} value={categoria.id}>
+                    {categoria.name}
                   </option>
                 ))}
               </Select>

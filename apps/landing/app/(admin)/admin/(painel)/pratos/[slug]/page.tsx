@@ -1,4 +1,4 @@
-import { getDishBySlug } from "@brasamar/db";
+import { getDishBySlug, getDishCategories } from "@brasamar/db";
 import { notFound } from "next/navigation";
 
 import { DeleteDishForm } from "@/components/admin/delete-dish-form";
@@ -18,7 +18,10 @@ export default async function EditarPratoPage({
   await requireAdmin();
 
   const { slug } = await params;
-  const dish = await getDishBySlug(slug);
+  const [dish, categories] = await Promise.all([
+    getDishBySlug(slug),
+    getDishCategories(),
+  ]);
 
   if (!dish) notFound();
 
@@ -26,7 +29,7 @@ export default async function EditarPratoPage({
     <>
       <VoltarPara href="/admin/pratos">Pratos</VoltarPara>
       <PageHeader titulo={dish.name} />
-      <DishForm dish={dish} />
+      <DishForm dish={dish} categories={categories} />
 
       <div className="mt-14 border-t border-creme/10 pt-8">
         <DeleteDishForm id={dish.id} nome={dish.name} imageUrl={dish.imageUrl} />

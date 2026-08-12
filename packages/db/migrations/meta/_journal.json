@@ -22,6 +22,13 @@
       "when": 1786552908844,
       "tag": "0002_bucket_fotos",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786559610711,
+      "tag": "0003_categorias_de_prato",
+      "breakpoints": true
     }
   ]
 }

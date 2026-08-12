@@ -89,8 +89,8 @@ rebuild, sem deploy:
 
 | Tela                | Edita                                                        |
 | ------------------- | ------------------------------------------------------------ |
-| Pratos              | criar, editar, apagar, reordenar, esconder e enviar fotos    |
-| Identidade e SEO    | nome, textos do topo, observação do cardápio, liga/desliga preços, descrição, palavras-chave e imagem de compartilhamento |
+| Pratos              | criar, editar, apagar, reordenar, esconder, enviar fotos, ligar/desligar preços e gerenciar as categorias (nome e cor) |
+| Identidade e SEO    | nome, textos do topo, observação do cardápio, fotos do hero, descrição, palavras-chave e imagem de compartilhamento |
 | Buffet              | textos, ocasiões atendidas e diferenciais numerados          |
 | Contato             | telefone do WhatsApp e e-mail                                |
 | Local e horários    | endereço, coordenadas com prévia do mapa, horário de cada dia |

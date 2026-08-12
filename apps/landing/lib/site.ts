@@ -176,11 +176,47 @@ export function schemaHours(hours: OpeningHour[]) {
     }));
 }
 
-export const dishTagLabels = {
-  carnes: "Carnes",
-  mar: "Mar",
-  "para-dividir": "Para dividir",
-} as const;
+/**
+ * Estilo do selo de categoria no card do prato.
+ *
+ * A cor vem do banco como hex, então é aplicada inline: classe montada em
+ * tempo de execução (`bg-${cor}`) não existiria no CSS, porque o Tailwind
+ * extrai as classes estaticamente durante o build.
+ *
+ * O texto sai um pouco mais claro que o fundo do selo — é o que o mockup fazia
+ * com `brasa-400` sobre `brasa-500/20`, e o que mantém a leitura no tema
+ * escuro quando o dono escolhe uma cor fechada.
+ */
+export function categoryBadgeStyle(color: string): {
+  backgroundColor: string;
+  color: string;
+} {
+  return {
+    backgroundColor: comAlfa(color, 0.2),
+    color: clarear(color, 0.25),
+  };
+}
+
+function canal(hex: string, inicio: number): number {
+  return Number.parseInt(hex.slice(inicio, inicio + 2), 16);
+}
+
+function comAlfa(hex: string, alfa: number): string {
+  const [r, g, b] = [canal(hex, 1), canal(hex, 3), canal(hex, 5)];
+  return `rgb(${r} ${g} ${b} / ${alfa})`;
+}
+
+/** Aproxima a cor do branco na proporção dada. */
+function clarear(hex: string, quanto: number): string {
+  const mistura = (valor: number) =>
+    Math.round(valor + (255 - valor) * quanto);
+
+  const r = mistura(canal(hex, 1));
+  const g = mistura(canal(hex, 3));
+  const b = mistura(canal(hex, 5));
+
+  return `rgb(${r} ${g} ${b})`;
+}
 
 /** Legenda do placeholder enquanto a foto do prato não foi enviada. */
 export function dishCaption(nome: string): string {

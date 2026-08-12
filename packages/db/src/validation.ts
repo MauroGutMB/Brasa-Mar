@@ -156,9 +156,24 @@ export const dishSchema = z.object({
   name: texto(120),
   priceCents: precoEmCentavos,
   description: texto(1000),
-  tag: z.enum(["carnes", "mar", "para-dividir"]),
+  categoryId: z.uuid("Escolha uma categoria"),
   imageAlt: textoOpcional(200),
   visible: checkbox,
+});
+
+/**
+ * Categoria do cardápio.
+ *
+ * A cor é hex de 6 dígitos porque o selo aplica o valor inline — classe
+ * dinâmica do Tailwind não sobreviveria ao build.
+ */
+export const dishCategorySchema = z.object({
+  name: texto(60),
+  color: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor no formato #rrggbb")
+    .transform((cor) => cor.toLowerCase()),
 });
 
 export const newUserSchema = z.object({
@@ -188,6 +203,7 @@ export type LocationInput = z.infer<typeof locationSchema>;
 export type OpeningHourInput = z.infer<typeof openingHourSchema>;
 export type BuffetInput = z.infer<typeof buffetSchema>;
 export type DishInput = z.infer<typeof dishSchema>;
+export type DishCategoryInput = z.infer<typeof dishCategorySchema>;
 export type NewUserInput = z.infer<typeof newUserSchema>;
 
 /**

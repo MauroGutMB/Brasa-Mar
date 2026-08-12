@@ -9,7 +9,7 @@
  */
 
 import { db, sql } from "./client";
-import { dishes, openingHours, siteSettings } from "./schema";
+import { dishCategories, dishes, openingHours, siteSettings } from "./schema";
 
 const settings = {
   id: 1,
@@ -94,6 +94,13 @@ const horarios = [
   { weekday: 0, label: "Domingo", opensAt: "11:00", closesAt: "23:00", closed: false },
 ];
 
+/** Cores originais do mockup, que estavam escritas no componente do card. */
+const categorias = [
+  { name: "Carnes", color: "#e2571f", position: 0 },
+  { name: "Mar", color: "#4e8cb4", position: 1 },
+  { name: "Para dividir", color: "#f2ebdd", position: 2 },
+];
+
 const pratos = [
   {
     slug: "picanha-na-brasa",
@@ -101,7 +108,7 @@ const pratos = [
     priceCents: 8900,
     description:
       "Picanha fatiada no ponto, farofa de alho, vinagrete e pão de alho.",
-    tag: "carnes" as const,
+    categoria: "Carnes",
     imageUrl: null,
     imageAlt: "Picanha fatiada na brasa",
     position: 0,
@@ -113,7 +120,7 @@ const pratos = [
     priceCents: 7600,
     description:
       "Camarões salteados na manteiga de garrafa com limão e arroz cremoso.",
-    tag: "mar" as const,
+    categoria: "Mar",
     imageUrl: null,
     imageAlt: "Camarão ao alho com arroz cremoso",
     position: 1,
@@ -125,7 +132,7 @@ const pratos = [
     priceCents: 8200,
     description:
       "Doze horas de brasa lenta, mandioca frita e molho de pimenta da casa.",
-    tag: "carnes" as const,
+    categoria: "Carnes",
     imageUrl: null,
     imageAlt: "Costela assada no bafo com mandioca frita",
     position: 2,
@@ -137,7 +144,7 @@ const pratos = [
     priceCents: 6800,
     description:
       "Filé grelhado com legumes, purê de macaxeira e molho de maracujá.",
-    tag: "mar" as const,
+    categoria: "Mar",
     imageUrl: null,
     imageAlt: "Peixe na telha com purê de macaxeira",
     position: 3,
@@ -149,7 +156,7 @@ const pratos = [
     priceCents: 11800,
     description:
       "Carnes variadas, linguiça artesanal, camarão e acompanhamentos.",
-    tag: "para-dividir" as const,
+    categoria: "Para dividir",
     imageUrl: null,
     imageAlt: "Tábua mista de carnes e camarão",
     position: 4,
@@ -160,7 +167,7 @@ const pratos = [
     name: "Moqueca da Casa",
     priceCents: 9400,
     description: "Peixe e camarão no leite de coco com dendê, pirão e arroz.",
-    tag: "mar" as const,
+    categoria: "Mar",
     imageUrl: null,
     imageAlt: "Moqueca de peixe e camarão",
     position: 5,
@@ -181,19 +188,44 @@ async function seed(): Promise<void> {
       .onConflictDoUpdate({ target: openingHours.weekday, set: dia });
   }
 
-  for (const prato of pratos) {
+  // As categorias precisam existir antes dos pratos, que apontam para elas.
+  //
+  // Só são criadas quando a tabela está vazia: a partir da primeira execução
+  // elas passam a ser do dono, que pode renomear e recolorir. Recriar pelo
+  // nome faria um "Carnes" renomeado virar duplicata a cada seed.
+  const existentes = await db.select().from(dishCategories);
+
+  const categoriasNoBanco = existentes.length
+    ? existentes
+    : await db.insert(dishCategories).values(categorias).returning();
+
+  const idPorNome = new Map(categoriasNoBanco.map((c) => [c.name, c.id]));
+  const primeira = categoriasNoBanco[0]?.id;
+
+  if (!primeira) {
+    throw new Error("Nenhuma categoria disponível para associar aos pratos.");
+  }
+
+  for (const { categoria, ...prato } of pratos) {
+    // Categoria renomeada pelo dono: o prato vai para a primeira da lista em
+    // vez de o seed falhar.
+    const categoryId = idPorNome.get(categoria) ?? primeira;
+
     // `imageUrl` fica de fora do update: rodar o seed de novo não pode apagar
     // uma foto que já foi enviada pelo admin.
     const { imageUrl: _imageUrl, ...semFoto } = prato;
 
     await db
       .insert(dishes)
-      .values(prato)
-      .onConflictDoUpdate({ target: dishes.slug, set: semFoto });
+      .values({ ...prato, categoryId })
+      .onConflictDoUpdate({
+        target: dishes.slug,
+        set: { ...semFoto, categoryId },
+      });
   }
 
   console.warn(
-    `Seed concluído: 1 configuração, ${horarios.length} horários, ${pratos.length} pratos.`,
+    `Seed concluído: 1 configuração, ${horarios.length} horários, ${categorias.length} categorias, ${pratos.length} pratos.`,
   );
 }
 

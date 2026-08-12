@@ -12,13 +12,16 @@ import { db } from "./client";
 import { SETTINGS_ID } from "./queries";
 import {
   adminUsers,
+  dishCategories,
   dishes,
   openingHours,
   siteSettings,
   type BuffetFeature,
   type BuffetOccasion,
   type Dish,
+  type DishCategory,
   type NewDish,
+  type NewDishCategory,
   type SiteSettingsUpdate,
 } from "./schema";
 import type {
@@ -205,6 +208,62 @@ export async function reorderDishes(ids: string[]): Promise<void> {
   await db.transaction(async (tx) => {
     for (const [indice, id] of ids.entries()) {
       await tx.update(dishes).set({ position: indice }).where(eq(dishes.id, id));
+    }
+  });
+}
+
+export async function createDishCategory(
+  input: Pick<NewDishCategory, "name" | "color">,
+): Promise<DishCategory> {
+  const [{ next } = { next: 0 }] = await db
+    .select({
+      next: raw<number>`coalesce(max(${dishCategories.position}), -1) + 1`,
+    })
+    .from(dishCategories);
+
+  const [criada] = await db
+    .insert(dishCategories)
+    .values({ ...input, position: next })
+    .returning();
+
+  if (!criada) {
+    throw new Error("Não foi possível criar a categoria.");
+  }
+
+  return criada;
+}
+
+export async function updateDishCategory(
+  id: string,
+  input: Pick<NewDishCategory, "name" | "color">,
+): Promise<void> {
+  await db
+    .update(dishCategories)
+    .set(input)
+    .where(eq(dishCategories.id, id));
+}
+
+/**
+ * Apagar categoria.
+ *
+ * A FK é `ON DELETE RESTRICT`, então o banco recusa se algum prato ainda usar
+ * — mas quem chama deve checar antes para dar uma mensagem decente em vez de
+ * deixar estourar um erro de constraint.
+ */
+export async function deleteDishCategory(id: string): Promise<void> {
+  await db.delete(dishCategories).where(eq(dishCategories.id, id));
+}
+
+/** Recebe os ids na ordem desejada e regrava `position`. */
+export async function reorderDishCategories(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+
+  await db.transaction(async (tx) => {
+    for (const [indice, id] of ids.entries()) {
+      await tx
+        .update(dishCategories)
+        .set({ position: indice })
+        .where(eq(dishCategories.id, id));
     }
   });
 }

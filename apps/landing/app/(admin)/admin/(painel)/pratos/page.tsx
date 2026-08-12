@@ -1,7 +1,13 @@
 import Link from "next/link";
 
-import { getAllDishes, getSiteSettings } from "@brasamar/db";
+import {
+  countDishesByCategory,
+  getAllDishes,
+  getDishCategories,
+  getSiteSettings,
+} from "@brasamar/db";
 
+import { CategoryManager } from "@/components/admin/category-manager";
 import { DishList } from "@/components/admin/dish-list";
 import { PageHeader } from "@/components/admin/page-header";
 import { PricesToggle } from "@/components/admin/prices-toggle";
@@ -12,9 +18,11 @@ export const instant = false;
 
 export default async function PratosPage() {
   await requireAdmin();
-  const [dishes, settings] = await Promise.all([
+  const [dishes, settings, categories, usoPorCategoria] = await Promise.all([
     getAllDishes(),
     getSiteSettings(),
+    getDishCategories(),
+    countDishesByCategory(),
   ]);
 
   return (
@@ -32,8 +40,12 @@ export default async function PratosPage() {
         </Link>
       </div>
 
-      <div className="mb-7">
+      <div className="mb-7 flex flex-col gap-3">
         <PricesToggle showPrices={settings.showPrices} />
+        <CategoryManager
+          categories={categories}
+          usoPorCategoria={usoPorCategoria}
+        />
       </div>
 
       <DishList dishes={dishes} />
