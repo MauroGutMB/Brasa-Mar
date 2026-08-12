@@ -94,7 +94,10 @@ pnpm dev
 
 No pacote de banco (`pnpm --filter @brasamar/db`): `db:generate` cria uma
 migration a partir do schema, `db:migrate` aplica, `db:seed` carrega o conteúdo
-inicial e `db:studio` abre as tabelas no navegador.
+inicial, `db:studio` abre as tabelas no navegador e `db:check` testa a conexão.
+
+`db:migrate` e `db:seed` verificam a conexão antes de começar e explicam o
+motivo quando ela falha — banco desligado, endereço errado ou senha recusada.
 
 Para um pacote específico: `pnpm --filter landing dev`.
 
