@@ -1,16 +1,18 @@
 # components/
 
-Componentes **específicos da landing page**. O que for genérico e reaproveitável
-pelo futuro app de pedidos deve morar em `packages/ui`.
-
-Organização sugerida conforme as seções forem sendo migradas do design:
+Componentes **específicos deste app**. O que for genérico e reaproveitável pelo
+futuro app de pedidos deve morar em `packages/ui`.
 
 ```
 components/
-├── sections/     # Hero, Cardápio, Sobre, Localização, Contato…
-└── shared/       # peças pequenas usadas só aqui (ImageSlot, ícones…)
+├── sections/     # seções da landing: Hero, Dishes, Buffet, Location, header, footer
+├── shared/       # peças pequenas da landing: ImageSlot, Logo, MobileNav, Rich, JSON-LD
+└── admin/        # painel: formulários, lista de pratos, navegação, mensagens
 ```
 
-Ao adaptar o arquivo Claude Design (`../design/`), cada seção do HTML vira um
-componente em `sections/`, e o `image-slot.js` vira um componente React em
-`shared/`.
+Os componentes de `sections/` são **assíncronos**: leem de `@/lib/data`, que
+envolve as queries em `use cache`. Não busque dado direto de `@brasamar/db`
+aqui — isso tiraria a página do cache e ela deixaria de ser pré-renderizada.
+
+Em `admin/` é o contrário: as telas leem direto de `@brasamar/db`, porque
+precisam mostrar o que acabou de ser salvo, não o que está publicado.

@@ -1,0 +1,35 @@
+{
+  "name": "@brasamar/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Schema, queries e validações do banco do Brasa e Mar (Postgres via Supabase).",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./validation": "./src/validation.ts"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/seed.ts",
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.7",
+    "postgres": "^3.4.7",
+    "zod": "^4.1.14"
+  },
+  "devDependencies": {
+    "@brasamar/config": "workspace:*",
+    "@types/node": "^24.10.1",
+    "drizzle-kit": "^0.31.6",
+    "eslint": "^9.39.5",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

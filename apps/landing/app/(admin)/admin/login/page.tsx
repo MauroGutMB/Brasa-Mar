@@ -1,0 +1,33 @@
+import Link from "next/link";
+
+import { Wordmark } from "@/components/shared/logo";
+import { LoginForm } from "@/components/admin/login-form";
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ proximo?: string }>;
+}) {
+  const { proximo } = await searchParams;
+
+  return (
+    <div className="grid min-h-dvh place-items-center bg-carvao-950 px-6 py-12">
+      <div className="w-full max-w-[380px]">
+        <div className="mb-9 text-center">
+          <Wordmark className="block text-2xl" />
+          <p className="mt-2.5 text-[10px] uppercase tracking-[0.3em] text-creme/40">
+            Painel de conteúdo
+          </p>
+        </div>
+
+        <LoginForm proximo={proximo} />
+
+        <p className="mt-8 text-center text-[13px] text-creme/40">
+          <Link href="/" className="text-inherit hover:text-brasa-500">
+            Voltar para o site
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}

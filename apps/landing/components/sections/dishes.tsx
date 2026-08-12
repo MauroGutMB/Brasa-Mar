@@ -1,19 +1,11 @@
 import { Eyebrow, Heading, Text } from "@brasamar/ui";
 
 import { DishCard } from "@/components/sections/dish-card";
-import { dishes } from "@/lib/site";
+import { getDishes, getSettings } from "@/lib/data";
 
-/** Legenda do placeholder enquanto a foto do prato não foi enviada. */
-const placeholderCaptions: Record<string, string> = {
-  "picanha-na-brasa": "Foto — picanha fatiada",
-  "camarao-ao-alho": "Foto — camarão ao alho",
-  "costela-no-bafo": "Foto — costela",
-  "peixe-na-telha": "Foto — peixe na telha",
-  "mixto-brasa-e-mar": "Foto — tábua mista",
-  "moqueca-da-casa": "Foto — moqueca",
-};
+export async function Dishes() {
+  const [dishes, settings] = await Promise.all([getDishes(), getSettings()]);
 
-export function Dishes() {
   return (
     <section
       id="pratos"
@@ -24,19 +16,16 @@ export function Dishes() {
           <Eyebrow className="mb-3.5">O menu</Eyebrow>
           <Heading level={2}>Pratos da casa</Heading>
         </div>
-        <Text muted className="max-w-[360px] text-[15.5px] leading-[1.6]">
-          Porções servem de 1 a 2 pessoas. Peça no balcão ou pelo WhatsApp para
-          retirada.
-        </Text>
+        {settings.dishesNote ? (
+          <Text muted className="max-w-[360px] text-[15.5px] leading-[1.6]">
+            {settings.dishesNote}
+          </Text>
+        ) : null}
       </div>
 
       <div className="grid gap-[26px] sm:grid-cols-2 lg:grid-cols-3">
         {dishes.map((dish) => (
-          <DishCard
-            key={dish.slug}
-            dish={dish}
-            caption={placeholderCaptions[dish.slug] ?? "Foto do prato"}
-          />
+          <DishCard key={dish.id} dish={dish} showPrice={settings.showPrices} />
         ))}
       </div>
     </section>

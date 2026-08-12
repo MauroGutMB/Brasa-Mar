@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow, Cinzel } from "next/font/google";
 
-import { siteConfig } from "@/lib/site";
+import { getSettings } from "@/lib/data";
+import { locale, siteUrl } from "@/lib/site";
 
 import "./globals.css";
 
@@ -19,60 +20,61 @@ const display = Cinzel({
   variable: "--font-display-family",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
-  title: {
-    default: `${siteConfig.name} — ${siteConfig.tagline}`,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  applicationName: siteConfig.name,
-  keywords: [
-    "churrascaria em Teresina",
-    "restaurante de frutos do mar",
-    "peixe na brasa",
-    "camarão",
-    "buffet para eventos",
-    "churrasco para eventos Teresina",
-    siteConfig.name,
-  ],
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    type: "website",
-    locale: siteConfig.locale,
-    url: siteConfig.url,
-    siteName: siteConfig.name,
-    title: `${siteConfig.name} — ${siteConfig.tagline}`,
-    description: siteConfig.description,
-    images: [
-      {
-        url: siteConfig.ogImage,
-        width: 1200,
-        height: 630,
-        alt: `${siteConfig.name} — ${siteConfig.tagline}`,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${siteConfig.name} — ${siteConfig.tagline}`,
-    description: siteConfig.description,
-    images: [siteConfig.ogImage],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+/**
+ * Metadata vem do banco: mudar nome, descrição ou palavras-chave no admin
+ * atualiza title, Open Graph e Twitter Card sem passar por deploy.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  const title = `${settings.name} — ${settings.tagline}`;
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: title,
+      template: `%s | ${settings.name}`,
+    },
+    description: settings.description,
+    applicationName: settings.name,
+    keywords: settings.seoKeywords,
+    alternates: {
+      canonical: "/",
+    },
+    openGraph: {
+      type: "website",
+      locale,
+      url: siteUrl,
+      siteName: settings.name,
+      title,
+      description: settings.description,
+      images: [
+        {
+          url: settings.ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: settings.description,
+      images: [settings.ogImageUrl],
+    },
+    robots: {
       index: true,
       follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
     },
-  },
-};
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#08090b",

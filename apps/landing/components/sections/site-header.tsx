@@ -2,10 +2,13 @@ import { ButtonLink } from "@brasamar/ui";
 
 import { Kicker, LogoMark, Wordmark } from "@/components/shared/logo";
 import { MobileNav } from "@/components/shared/mobile-nav";
+import { getSettings } from "@/lib/data";
 import { navItems } from "@/lib/nav";
-import { contact, whatsappLink } from "@/lib/site";
+import { whatsappLink } from "@/lib/site";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const settings = await getSettings();
+
   return (
     <header className="sticky top-0 z-50 border-b border-creme/10 bg-carvao-950/85 backdrop-blur-[14px]">
       <div className="flex items-center justify-between gap-6 px-6 py-4 lg:px-12">
@@ -15,7 +18,7 @@ export function SiteHeader() {
               CTA do telefone para fora da tela. */}
           <span className="hidden leading-none sm:block">
             <Wordmark className="block whitespace-nowrap text-[15px]" />
-            <Kicker className="mt-1 text-[8.5px]" />
+            <Kicker kicker={settings.kicker} className="mt-1 text-[8.5px]" />
           </span>
         </a>
 
@@ -34,7 +37,7 @@ export function SiteHeader() {
           </ul>
 
           <ButtonLink
-            href={whatsappLink}
+            href={whatsappLink(settings.phone)}
             size="sm"
             className="whitespace-nowrap normal-case"
           >
@@ -42,7 +45,7 @@ export function SiteHeader() {
               aria-hidden
               className="size-[7px] rounded-full bg-carvao-1000 opacity-55"
             />
-            {contact.phone}
+            {settings.phone}
           </ButtonLink>
 
           <MobileNav items={navItems} />

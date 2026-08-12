@@ -15,6 +15,7 @@
     "./tailwind/theme.css": "./tailwind/theme.css",
     "./tsconfig/base.json": "./tsconfig/base.json",
     "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
+    "./tsconfig/node-library.json": "./tsconfig/node-library.json",
     "./tsconfig/react-library.json": "./tsconfig/react-library.json"
   },
   "scripts": {

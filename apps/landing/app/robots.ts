@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { siteConfig } from "@/lib/site";
+import { siteUrl } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -10,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
       // O painel não deve ser indexado.
       disallow: "/admin",
     },
-    sitemap: `${siteConfig.url}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }

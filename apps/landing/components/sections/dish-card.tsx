@@ -1,13 +1,8 @@
+import type { Dish, DishTag } from "@brasamar/db";
 import { Card, Heading, Text } from "@brasamar/ui";
 
 import { ImageSlot } from "@/components/shared/image-slot";
-import {
-  dishTagLabels,
-  formatPrice,
-  siteConfig,
-  type Dish,
-  type DishTag,
-} from "@/lib/site";
+import { dishCaption, dishTagLabels, formatPrice } from "@/lib/site";
 
 const tagClasses: Record<DishTag, string> = {
   carnes: "bg-brasa-500/20 text-brasa-400",
@@ -15,14 +10,20 @@ const tagClasses: Record<DishTag, string> = {
   "para-dividir": "bg-creme/10 text-creme/70",
 };
 
-export function DishCard({ dish, caption }: { dish: Dish; caption: string }) {
+export interface DishCardProps {
+  dish: Dish;
+  /** Vem de site_settings.showPrices — o admin liga e desliga o cardápio todo. */
+  showPrice: boolean;
+}
+
+export function DishCard({ dish, showPrice }: DishCardProps) {
   return (
     <Card className="flex flex-col transition-colors hover:border-brasa-500/50">
       <div className="relative h-[230px]">
         <ImageSlot
           src={dish.imageUrl}
           alt={dish.imageAlt}
-          caption={caption}
+          caption={dishCaption(dish.name)}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
       </div>
@@ -30,7 +31,7 @@ export function DishCard({ dish, caption }: { dish: Dish; caption: string }) {
       <div className="flex flex-1 flex-col gap-2.5 px-6 pb-[26px] pt-[22px]">
         <div className="flex items-baseline justify-between gap-3.5">
           <Heading level={3}>{dish.name}</Heading>
-          {siteConfig.showPrices ? (
+          {showPrice ? (
             <span className="whitespace-nowrap text-base font-semibold text-brasa-500">
               {formatPrice(dish.priceCents)}
             </span>

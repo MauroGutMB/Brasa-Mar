@@ -18,7 +18,11 @@ dinâmicas e autenticadas.
    - `tsconfig.json` → `extends: "@brasamar/config/tsconfig/nextjs.json"`
    - `eslint.config.mjs` → `@brasamar/config/eslint/next`
    - `app/globals.css` → `@import "@brasamar/config/tailwind/theme.css"`
-3. Adicionar `"@brasamar/ui": "workspace:*"` às dependências — botões, cards e
-   tipografia já estão prontos lá.
-4. Nenhuma mudança é necessária no `turbo.json`: as tasks `dev`, `build`,
+3. Adicionar `"@brasamar/ui": "workspace:*"` às dependências — botões, cards,
+   tipografia e campos de formulário já estão prontos lá.
+4. Adicionar `"@brasamar/db": "workspace:*"` e incluir os dois pacotes em
+   `transpilePackages`. O schema dos pratos (com preço, categoria, foto e
+   visibilidade) já existe e é o mesmo que o cardápio da landing usa — o app
+   de pedidos lê dali em vez de duplicar.
+5. Nenhuma mudança é necessária no `turbo.json`: as tasks `dev`, `build`,
    `lint` e `check-types` são aplicadas a todo workspace que as definir.

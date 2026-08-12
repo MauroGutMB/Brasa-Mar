@@ -2,4 +2,6 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
+  # o drizzle-kit roda em cima do esbuild
+  esbuild: true
   unrs-resolver: true

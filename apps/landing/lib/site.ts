@@ -1,195 +1,50 @@
 /**
- * Dados canônicos do restaurante.
+ * Derivações do conteúdo do site.
  *
- * Na Fase 2 estes valores passam a vir do Postgres (e a ser editáveis pelo
- * painel de admin); os tipos aqui já espelham o schema que vai existir, para
- * a troca ser só de origem dos dados.
+ * Os dados em si vivem no Postgres (ver `@brasamar/db`) e chegam aqui por
+ * parâmetro — este arquivo não guarda estado nem consulta nada, só transforma.
+ * Tudo que é editável pelo admin passou a ser coluna; o que sobrou aqui é
+ * cálculo que não faz sentido guardar duplicado no banco.
  */
 
-export const siteConfig = {
-  name: "Brasa & Mar",
-  tagline: "Churrasco & frutos do mar",
-  kicker: "Ponto de alimentação",
-  description:
-    "Churrasco na brasa e frutos do mar frescos em Teresina. Carnes no ponto certo, camarão, peixes e moqueca, com buffet completo para eventos.",
-  /** Trocar pelo domínio definitivo antes do deploy. */
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://brasaemar.com.br",
-  locale: "pt_BR",
-  ogImage: "/og.jpg",
-  /** Vira coluna em site_settings na Fase 2. */
-  showPrices: true,
-} as const;
+import type { OpeningHour, SiteSettings } from "@brasamar/db";
 
-export const contact = {
-  phone: "86 99437-0852",
-  email: "",
-} as const;
+/** Só a URL canônica continua vindo do ambiente: é config de deploy, não conteúdo. */
+export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://brasaemar.com.br";
+
+export const locale = "pt_BR";
+
+type Endereco = Pick<
+  SiteSettings,
+  "street" | "number" | "district" | "city" | "state" | "lat" | "lng"
+>;
 
 /** Link do WhatsApp derivado do telefone — não guardar duplicado. */
-export const whatsappLink = `https://wa.me/55${contact.phone.replace(/\D/g, "")}`;
+export function whatsappLink(phone: string): string {
+  return `https://wa.me/55${phone.replace(/\D/g, "")}`;
+}
 
-/**
- * TODO(admin): endereço e coordenadas vieram como placeholder do mockup.
- * Passam a ser editáveis em /admin/local na Fase 4.
- */
-export const address = {
-  street: "Av. Principal",
-  number: "000",
-  district: "Centro",
-  city: "Teresina",
-  state: "PI",
-  zip: "",
-  lat: -5.089,
-  lng: -42.801,
-} as const;
+/** Telefone só com dígitos, no formato E.164 que o JSON-LD espera. */
+export function phoneE164(phone: string): string {
+  return `+55${phone.replace(/\D/g, "")}`;
+}
 
-export const addressLine = `${address.street}, ${address.number} — ${address.district}`;
-export const cityLine = `${address.city} — ${address.state}`;
+export function addressLine(endereco: Endereco): string {
+  return `${endereco.street}, ${endereco.number} — ${endereco.district}`;
+}
+
+export function cityLine(endereco: Endereco): string {
+  return `${endereco.city} — ${endereco.state}`;
+}
 
 /** bbox de ~0.08° em volta do ponto, como no mockup. */
-export const mapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${
-  address.lng - 0.042
-}%2C${address.lat - 0.027}%2C${address.lng + 0.042}%2C${
-  address.lat + 0.033
-}&layer=mapnik&marker=${address.lat}%2C${address.lng}`;
+export function mapEmbedUrl(endereco: Pick<Endereco, "lat" | "lng">): string {
+  const { lat, lng } = endereco;
 
-export interface OpeningHour {
-  /** 0 = domingo … 6 = sábado, igual a Date#getDay. */
-  weekday: number;
-  label: string;
-  opensAt: string;
-  closesAt: string;
-  closed: boolean;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.042}%2C${
+    lat - 0.027
+  }%2C${lng + 0.042}%2C${lat + 0.033}&layer=mapnik&marker=${lat}%2C${lng}`;
 }
-
-export const openingHours: OpeningHour[] = [
-  { weekday: 1, label: "Segunda", opensAt: "", closesAt: "", closed: true },
-  { weekday: 2, label: "Terça", opensAt: "11:00", closesAt: "22:00", closed: false },
-  { weekday: 3, label: "Quarta", opensAt: "11:00", closesAt: "22:00", closed: false },
-  { weekday: 4, label: "Quinta", opensAt: "11:00", closesAt: "22:00", closed: false },
-  { weekday: 5, label: "Sexta", opensAt: "11:00", closesAt: "22:00", closed: false },
-  { weekday: 6, label: "Sábado", opensAt: "11:00", closesAt: "23:00", closed: false },
-  { weekday: 0, label: "Domingo", opensAt: "11:00", closesAt: "23:00", closed: false },
-];
-
-/** Resumo mostrado no hero e agrupamento da seção de localização. */
-export const hoursSummary = { range: "11h — 23h", days: "Terça a domingo" } as const;
-
-export const hoursGroups = [
-  { days: "Terça a sexta", hours: "11h — 22h", closed: false },
-  { days: "Sábado e domingo", hours: "11h — 23h", closed: false },
-  { days: "Segunda", hours: "Fechado", closed: true },
-] as const;
-
-export type DishTag = "carnes" | "mar" | "para-dividir";
-
-export interface Dish {
-  slug: string;
-  name: string;
-  priceCents: number;
-  description: string;
-  tag: DishTag;
-  imageUrl: string | null;
-  imageAlt: string;
-}
-
-export const dishTagLabels: Record<DishTag, string> = {
-  carnes: "Carnes",
-  mar: "Mar",
-  "para-dividir": "Para dividir",
-};
-
-export const dishes: Dish[] = [
-  {
-    slug: "picanha-na-brasa",
-    name: "Picanha na Brasa",
-    priceCents: 8900,
-    description:
-      "Picanha fatiada no ponto, farofa de alho, vinagrete e pão de alho.",
-    tag: "carnes",
-    imageUrl: null,
-    imageAlt: "Picanha fatiada na brasa",
-  },
-  {
-    slug: "camarao-ao-alho",
-    name: "Camarão ao Alho",
-    priceCents: 7600,
-    description:
-      "Camarões salteados na manteiga de garrafa com limão e arroz cremoso.",
-    tag: "mar",
-    imageUrl: null,
-    imageAlt: "Camarão ao alho com arroz cremoso",
-  },
-  {
-    slug: "costela-no-bafo",
-    name: "Costela no Bafo",
-    priceCents: 8200,
-    description:
-      "Doze horas de brasa lenta, mandioca frita e molho de pimenta da casa.",
-    tag: "carnes",
-    imageUrl: null,
-    imageAlt: "Costela assada no bafo com mandioca frita",
-  },
-  {
-    slug: "peixe-na-telha",
-    name: "Peixe na Telha",
-    priceCents: 6800,
-    description:
-      "Filé grelhado com legumes, purê de macaxeira e molho de maracujá.",
-    tag: "mar",
-    imageUrl: null,
-    imageAlt: "Peixe na telha com purê de macaxeira",
-  },
-  {
-    slug: "mixto-brasa-e-mar",
-    name: "Mixto Brasa & Mar",
-    priceCents: 11800,
-    description:
-      "Carnes variadas, linguiça artesanal, camarão e acompanhamentos.",
-    tag: "para-dividir",
-    imageUrl: null,
-    imageAlt: "Tábua mista de carnes e camarão",
-  },
-  {
-    slug: "moqueca-da-casa",
-    name: "Moqueca da Casa",
-    priceCents: 9400,
-    description: "Peixe e camarão no leite de coco com dendê, pirão e arroz.",
-    tag: "mar",
-    imageUrl: null,
-    imageAlt: "Moqueca de peixe e camarão",
-  },
-];
-
-/** Fotos avulsas da página. Viram colunas de site_settings na Fase 2. */
-export const heroImages = {
-  main: { url: null as string | null, alt: "Churrasco na brasa" },
-  secondary: { url: null as string | null, alt: "Frutos do mar frescos" },
-} as const;
-
-export const buffetImage = {
-  url: null as string | null,
-  alt: "Buffet montado para evento",
-} as const;
-
-/** Conteúdo fixo da seção de buffet — fora do escopo do admin. */
-export const buffetOccasions = [
-  "Aniversários",
-  "Confraternizações",
-  "Casamentos",
-  "Empresariais",
-  "E muito mais",
-] as const;
-
-export const buffetFeatures = [
-  { numeral: "I", title: "Churrasco de qualidade" },
-  { numeral: "II", title: "Churrasqueiro profissional" },
-  { numeral: "III", title: "Acompanhamentos variados" },
-  { numeral: "IV", title: "Estrutura completa" },
-  { numeral: "V", title: "Eventos de todos os tamanhos" },
-] as const;
-
-export const locationNote = "Estacionamento na frente · Delivery na região";
 
 /** "R$ 89" quando não há centavos, "R$ 89,50" quando há — como no mockup. */
 export function formatPrice(priceCents: number): string {
@@ -198,4 +53,136 @@ export function formatPrice(priceCents: number): string {
     currency: "BRL",
     minimumFractionDigits: priceCents % 100 === 0 ? 0 : 2,
   }).format(priceCents / 100);
+}
+
+/** "11:00" → "11h", "11:30" → "11h30" — o formato curto que o layout usa. */
+function formatHour(hora: string): string {
+  const [h, m] = hora.split(":");
+  return m && m !== "00" ? `${Number(h)}h${m}` : `${Number(h)}h`;
+}
+
+function faixa(dia: OpeningHour): string {
+  return dia.closed
+    ? "Fechado"
+    : `${formatHour(dia.opensAt)} — ${formatHour(dia.closesAt)}`;
+}
+
+export interface HoursGroup {
+  days: string;
+  hours: string;
+  closed: boolean;
+}
+
+/**
+ * Agrupa dias consecutivos com o mesmo horário — "Terça a sexta 11h — 22h".
+ *
+ * Antes era uma lista escrita à mão; como agora cada dia é editável no admin,
+ * o agrupamento tem que ser calculado, senão o resumo mente.
+ *
+ * Os dias fechados vão para o fim da lista, como no layout original: quem lê
+ * quer primeiro saber quando o restaurante abre.
+ */
+export function groupHours(hours: OpeningHour[]): HoursGroup[] {
+  const grupos: { dias: string[]; hours: string; closed: boolean }[] = [];
+
+  for (const dia of hours) {
+    const atual = faixa(dia);
+    const ultimo = grupos.at(-1);
+
+    if (ultimo && ultimo.hours === atual) {
+      ultimo.dias.push(dia.label);
+      continue;
+    }
+
+    grupos.push({ dias: [dia.label], hours: atual, closed: dia.closed });
+  }
+
+  const rotular = (dias: string[]): string => {
+    const primeiro = dias[0]!;
+    const ultimo = dias.at(-1)!.toLowerCase();
+
+    if (dias.length === 1) return primeiro;
+    // Dois dias soltos ficam melhor com "e": "Sábado e domingo".
+    if (dias.length === 2) return `${primeiro} e ${ultimo}`;
+    return `${primeiro} a ${ultimo}`;
+  };
+
+  return [
+    ...grupos.filter((grupo) => !grupo.closed),
+    ...grupos.filter((grupo) => grupo.closed),
+  ].map((grupo) => ({
+    days: rotular(grupo.dias),
+    hours: grupo.hours,
+    closed: grupo.closed,
+  }));
+}
+
+export interface HoursSummary {
+  range: string;
+  days: string;
+}
+
+/**
+ * Resumo curto do hero: a faixa mais ampla de atendimento e em que dias o
+ * restaurante abre.
+ */
+export function summarizeHours(hours: OpeningHour[]): HoursSummary {
+  const abertos = hours.filter((dia) => !dia.closed);
+
+  if (abertos.length === 0) {
+    return { range: "Fechado", days: "Consulte pelo WhatsApp" };
+  }
+
+  const abre = abertos.reduce(
+    (menor, dia) => (dia.opensAt < menor ? dia.opensAt : menor),
+    abertos[0]!.opensAt,
+  );
+  const fecha = abertos.reduce(
+    (maior, dia) => (dia.closesAt > maior ? dia.closesAt : maior),
+    abertos[0]!.closesAt,
+  );
+
+  const primeiro = abertos[0]!.label;
+  const ultimo = abertos.at(-1)!.label;
+  const days =
+    abertos.length === hours.length
+      ? "Todos os dias"
+      : abertos.length === 1
+        ? primeiro
+        : `${primeiro} a ${ultimo.toLowerCase()}`;
+
+  return { range: `${formatHour(abre)} — ${formatHour(fecha)}`, days };
+}
+
+/** Horário no formato "11:00-22:00" que o schema.org espera. */
+export function schemaHours(hours: OpeningHour[]) {
+  const dias = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  return hours
+    .filter((dia) => !dia.closed)
+    .map((dia) => ({
+      "@type": "OpeningHoursSpecification" as const,
+      dayOfWeek: dias[dia.weekday],
+      opens: dia.opensAt,
+      closes: dia.closesAt,
+    }));
+}
+
+export const dishTagLabels = {
+  carnes: "Carnes",
+  mar: "Mar",
+  "para-dividir": "Para dividir",
+} as const;
+
+/** Legenda do placeholder enquanto a foto do prato não foi enviada. */
+export function dishCaption(nome: string): string {
+  return `Foto — ${nome.toLowerCase()}`;
 }

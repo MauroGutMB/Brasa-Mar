@@ -1,51 +1,41 @@
-import { address, contact, openingHours, siteConfig } from "@/lib/site";
-
-const schemaDays = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+import { getHours, getSettings } from "@/lib/data";
+import { phoneE164, schemaHours, siteUrl } from "@/lib/site";
 
 /**
  * JSON-LD de negócio local — é o que alimenta o painel do Google e a busca
- * "churrascaria perto de mim". Mantido em sincronia com lib/site.ts.
+ * "churrascaria perto de mim". Lê exatamente as mesmas configurações que a
+ * página, então editar endereço ou horário no admin atualiza os dois juntos.
  */
-export function RestaurantJsonLd() {
+export async function RestaurantJsonLd() {
+  const [settings, hours] = await Promise.all([getSettings(), getHours()]);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Restaurant",
-    name: siteConfig.name,
-    description: siteConfig.description,
-    url: siteConfig.url,
-    image: `${siteConfig.url}${siteConfig.ogImage}`,
-    telephone: `+55${contact.phone.replace(/\D/g, "")}`,
+    name: settings.name,
+    description: settings.description,
+    url: siteUrl,
+    image: settings.ogImageUrl.startsWith("http")
+      ? settings.ogImageUrl
+      : `${siteUrl}${settings.ogImageUrl}`,
+    telephone: phoneE164(settings.phone),
+    email: settings.email || undefined,
     servesCuisine: ["Churrasco", "Frutos do mar", "Brasileira"],
     priceRange: "$$",
     address: {
       "@type": "PostalAddress",
-      streetAddress: `${address.street}, ${address.number}`,
-      addressLocality: address.city,
-      addressRegion: address.state,
-      postalCode: address.zip || undefined,
+      streetAddress: `${settings.street}, ${settings.number}`,
+      addressLocality: settings.city,
+      addressRegion: settings.state,
+      postalCode: settings.zip || undefined,
       addressCountry: "BR",
     },
     geo: {
       "@type": "GeoCoordinates",
-      latitude: address.lat,
-      longitude: address.lng,
+      latitude: settings.lat,
+      longitude: settings.lng,
     },
-    openingHoursSpecification: openingHours
-      .filter((hour) => !hour.closed)
-      .map((hour) => ({
-        "@type": "OpeningHoursSpecification",
-        dayOfWeek: schemaDays[hour.weekday],
-        opens: hour.opensAt,
-        closes: hour.closesAt,
-      })),
+    openingHoursSpecification: schemaHours(hours),
   };
 
   return (

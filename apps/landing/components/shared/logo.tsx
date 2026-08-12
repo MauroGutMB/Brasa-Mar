@@ -1,7 +1,5 @@
 import { cn } from "@brasamar/ui";
 
-import { siteConfig } from "@/lib/site";
-
 /** Selo circular "B&M" do header. */
 export function LogoMark({ className }: { className?: string }) {
   return (
@@ -39,7 +37,13 @@ export function Wordmark({ className, tinted = true }: WordmarkProps) {
   );
 }
 
-export function Kicker({ className }: { className?: string }) {
+export interface KickerProps {
+  /** Vem de site_settings.kicker — quem renderiza já leu as configurações. */
+  kicker: string;
+  className?: string;
+}
+
+export function Kicker({ kicker, className }: KickerProps) {
   return (
     <span
       className={cn(
@@ -47,7 +51,7 @@ export function Kicker({ className }: { className?: string }) {
         className,
       )}
     >
-      {siteConfig.kicker}
+      {kicker}
     </span>
   );
 }
