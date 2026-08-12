@@ -3,6 +3,14 @@ import Link from "next/link";
 import { Wordmark } from "@/components/shared/logo";
 import { LoginForm } from "@/components/admin/login-form";
 
+/**
+ * O `instant = false` do grupo `(admin)` cobre o bloqueio que acontece nos
+ * layouts, mas esta página lê `searchParams` nela mesma — e isso é validado no
+ * segmento da própria página. Aqui não há o que pré-renderizar: a tela de login
+ * depende do `?proximo=` para devolver a pessoa ao lugar certo depois de entrar.
+ */
+export const instant = false;
+
 export default async function LoginPage({
   searchParams,
 }: {

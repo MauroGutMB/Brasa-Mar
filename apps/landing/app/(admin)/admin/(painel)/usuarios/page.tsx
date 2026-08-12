@@ -4,6 +4,9 @@ import { PageHeader } from "@/components/admin/page-header";
 import { UsersPanel } from "@/components/admin/users-panel";
 import { requireAdmin } from "@/lib/auth/dal";
 
+/** Espera a sessão antes de renderizar; ver o layout do painel. */
+export const instant = false;
+
 export default async function UsuariosPage() {
   const atual = await requireAdmin();
   const users = await getAdminUsers();

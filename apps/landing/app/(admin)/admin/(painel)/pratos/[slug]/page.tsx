@@ -7,6 +7,9 @@ import { PageHeader } from "@/components/admin/page-header";
 import { VoltarPara } from "@/components/admin/voltar-para";
 import { requireAdmin } from "@/lib/auth/dal";
 
+/** Espera a sessão antes de renderizar; ver o layout do painel. */
+export const instant = false;
+
 export default async function EditarPratoPage({
   params,
 }: {

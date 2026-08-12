@@ -4,6 +4,9 @@ import { ContactForm } from "@/components/admin/contact-form";
 import { PageHeader } from "@/components/admin/page-header";
 import { requireAdmin } from "@/lib/auth/dal";
 
+/** Espera a sessão antes de renderizar; ver o layout do painel. */
+export const instant = false;
+
 export default async function ContatoPage() {
   await requireAdmin();
   // Leitura sem cache: o painel tem que mostrar o valor recém-salvo, não o

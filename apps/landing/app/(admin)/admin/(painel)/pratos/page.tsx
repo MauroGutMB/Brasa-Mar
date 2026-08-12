@@ -6,6 +6,9 @@ import { DishList } from "@/components/admin/dish-list";
 import { PageHeader } from "@/components/admin/page-header";
 import { requireAdmin } from "@/lib/auth/dal";
 
+/** Espera a sessão antes de renderizar; ver o layout do painel. */
+export const instant = false;
+
 export default async function PratosPage() {
   await requireAdmin();
   const dishes = await getAllDishes();

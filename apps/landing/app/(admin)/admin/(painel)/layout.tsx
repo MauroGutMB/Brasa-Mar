@@ -12,6 +12,15 @@ import { requireAdmin } from "@/lib/auth/dal";
  * mas cada página e cada action chama de novo: layout não é fronteira de
  * segurança no App Router — ele não roda de novo em navegações parciais.
  */
+/**
+ * Toda tela daqui espera pela sessão antes de renderizar — não existe shell
+ * que faça sentido mostrar antes de saber quem é a pessoa.
+ *
+ * O `instant = false` do grupo `(admin)` já cobre a validação de build; esta,
+ * de navegação, é avaliada por segmento e precisa da marca aqui também.
+ */
+export const instant = false;
+
 export default async function AdminLayout({
   children,
 }: {

@@ -39,6 +39,9 @@ const atalhos = [
   },
 ];
 
+/** Espera a sessão antes de renderizar; ver o layout do painel. */
+export const instant = false;
+
 export default async function AdminHomePage() {
   const user = await requireAdmin();
   const [settings, dishes] = await Promise.all([getSettings(), getAllDishes()]);

@@ -24,12 +24,25 @@ const globalForDb = globalThis as unknown as {
   __brasamarSql?: ReturnType<typeof postgres>;
 };
 
+const url = connectionString();
+
+/**
+ * Banco na máquina não tem SSL; qualquer outro (Supabase, VPS) tem.
+ *
+ * A string que o painel do Supabase entrega nem sempre traz `sslmode`, e sem
+ * ele o postgres.js conecta em texto puro e leva um erro obscuro. Quando o
+ * host não é local e nada foi pedido explicitamente, exigimos SSL.
+ */
+const hostLocal = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
+const sslDefinidoNaUrl = url.includes("sslmode=");
+
 const sql =
   globalForDb.__brasamarSql ??
-  postgres(connectionString(), {
+  postgres(url, {
     // O pooler do Supabase (porta 6543) não suporta prepared statements.
     prepare: false,
     max: 5,
+    ...(hostLocal || sslDefinidoNaUrl ? {} : { ssl: "require" as const }),
   });
 
 if (process.env.NODE_ENV !== "production") {
