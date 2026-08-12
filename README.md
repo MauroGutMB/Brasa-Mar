@@ -105,140 +105,47 @@ Antes de subir mudanças: `pnpm lint && pnpm check-types && pnpm build`.
 ## Produção
 
 O site roda na **Vercel** e o banco, a autenticação e as fotos ficam no
-**Supabase**.
+**Supabase**. Nada no código é específico dessas plataformas: a Vercel entra
+como um lugar que executa Next.js, e o Supabase é um Postgres com autenticação
+e armazenamento de arquivos por cima.
 
-### 1. Criar o projeto no Supabase
+**Como está configurado:**
 
-Escolha a região **South America (São Paulo)** e guarde a senha do banco pedida
-na criação — ela não pode ser vista depois, só redefinida.
+- **Publicação** — a aplicação é a pasta `apps/landing` do monorepo, e é ela que
+  a Vercel constrói (`Root Directory`). Cada envio para a branch principal gera
+  um novo deploy.
+- **Conteúdo pré-renderizado** — o conteúdo do site é lido do banco durante a
+  build e gravado no HTML, então a página não consulta o Postgres a cada visita.
+  Como consequência, **a build precisa ter acesso ao banco**.
+- **Atualização sem deploy** — o que o restaurante salva no painel invalida
+  apenas a parte afetada do conteúdo e aparece no site imediatamente, sem nova
+  publicação.
+- **Banco** — a aplicação se conecta pelo *transaction pooler* do Supabase, que
+  divide poucas conexões entre muitas requisições. Migrations e carga inicial
+  usam a conexão direta. Fora do ambiente local, o SSL é exigido
+  automaticamente.
+- **Segurança dos dados** — todas as tabelas têm *row level security* ativa e
+  sem políticas de acesso: só o servidor da aplicação lê e escreve, usando a
+  connection string. A chave `service_role` nunca chega ao navegador.
+- **Acesso ao painel** — depende de dois requisitos simultâneos: sessão válida
+  no Supabase Auth **e** registro na tabela de administradores. Remover a pessoa
+  do painel corta o acesso mesmo com a sessão ainda válida.
+- **Fotos** — ficam num bucket público do Supabase Storage, enviadas apenas pelo
+  servidor e entregues otimizadas pelo Next.js.
 
-Em seguida, colete estes valores:
+### Variáveis de ambiente
 
-| Onde, no painel do Supabase | Valor |
+| Variável | Para que serve |
 | --- | --- |
-| Project Settings → API | Project URL |
-| Project Settings → API | chave `anon` |
-| Project Settings → API | chave `service_role` |
-| Project Settings → Database | connection string **Direct** (porta 5432) |
-| Project Settings → Database | connection string **Transaction pooler** (porta 6543) |
+| `DATABASE_URL` | conexão com o Postgres |
+| `NEXT_PUBLIC_SUPABASE_URL` | endereço da API do Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | chave pública, usada no login |
+| `SUPABASE_SERVICE_ROLE_KEY` | chave privada, usada no envio de fotos e na gestão de usuários |
+| `NEXT_PUBLIC_SITE_URL` | endereço público do site |
 
-> A chave `service_role` tem acesso irrestrito ao banco. Ela só existe no
-> servidor — nunca deve ir para o navegador nem ser compartilhada.
-
-**As duas connection strings têm usos diferentes e não são intercambiáveis:**
-a *direct* aguenta os comandos que criam e alteram tabelas, e é a que você usa
-para preparar o banco; a do *pooler* é a que o site usa em produção, onde cada
-visita pode cair num processo diferente.
-
-### 2. Preparar o banco
-
-Uma vez só, da sua máquina, apontando para o banco novo com a string **direct**:
-
-```bash
-export PROD_DB="postgresql://postgres:[SENHA]@db.xxxxx.supabase.co:5432/postgres"
-
-DATABASE_URL="$PROD_DB" pnpm --filter @brasamar/db db:migrate
-DATABASE_URL="$PROD_DB" pnpm --filter @brasamar/db db:seed
-```
-
-O `db:migrate` cria as tabelas, ativa a segurança em todas elas e prepara o
-espaço de armazenamento das fotos. O `db:seed` carrega o conteúdo inicial e pode
-ser executado novamente sem apagar fotos já enviadas.
-
-### 3. Publicar na Vercel
-
-1. Importe o repositório na Vercel.
-2. Em **Root Directory**, aponte para **`apps/landing`** — é um monorepo, e sem
-   isso a build tenta construir a raiz.
-3. Cadastre as cinco variáveis de ambiente, marcando **Production** e
-   **Preview**:
-
-```
-DATABASE_URL                   ← connection string do POOLER (6543)
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-NEXT_PUBLIC_SITE_URL           ← endereço público do site
-```
-
-4. Faça o deploy.
-5. Com o domínio apontado, atualize `NEXT_PUBLIC_SITE_URL` e **refaça o
-   deploy** — variáveis `NEXT_PUBLIC_*` são gravadas no site durante a build, e
-   mudá-las no painel não altera o que já foi publicado.
-
-**Dois pontos que evitam diagnóstico difícil:**
-
-- **A build precisa conseguir acessar o banco.** O conteúdo do site é lido do
-  Postgres e gravado no HTML durante a construção. Com o projeto do Supabase
-  pausado, o deploy falha — não é apenas o site que sai do ar.
-- **A build passa mesmo sem as variáveis do Supabase**, sem nenhum aviso. O
-  deploy fica verde, o site carrega, e só o painel e as fotos deixam de
-  funcionar. Confira as cinco antes de publicar.
-
-> O plano gratuito do Supabase pausa o projeto após cerca de 7 dias sem acesso
-> ao banco. É só reativar no painel deles.
-
----
-
-## Criar uma conta de administrador pelo Supabase
-
-Este é o caminho para liberar o primeiro acesso ao `/admin` em produção, sem
-precisar rodar nada pelo terminal.
-
-São **dois passos, e os dois são obrigatórios**: criar a conta de acesso e
-autorizá-la no painel. Uma conta que existe só no primeiro passo consegue
-digitar a senha, mas recebe a mensagem *"Esta conta existe, mas ainda não tem
-acesso ao painel"* — é essa segunda etapa que concede a permissão.
-
-### Passo 1 — criar a conta de acesso
-
-1. No painel do Supabase, vá em **Authentication → Users**.
-2. Clique em **Add user → Create new user**.
-3. Preencha o e-mail e uma senha com no mínimo 8 caracteres.
-4. Marque **Auto Confirm User** — sem isso a conta fica aguardando confirmação
-   por e-mail e o login não funciona.
-5. Confirme. O usuário aparece na lista.
-6. **Copie o UID** dele (a coluna `User UID`, algo como
-   `2e41800c-f136-4b5f-96fd-dffa15911116`).
-
-### Passo 2 — autorizar no painel
-
-1. Vá em **SQL Editor** e clique em **New query**.
-2. Cole o comando abaixo, trocando os três valores pelos seus:
-
-```sql
-insert into admin_users (id, email, name)
-values (
-  '2e41800c-f136-4b5f-96fd-dffa15911116',  -- o UID copiado no passo 1
-  'dono@brasaemar.com.br',                 -- o mesmo e-mail do passo 1
-  'Nome da Pessoa'                         -- como aparecerá no painel
-);
-```
-
-3. Clique em **Run**. A resposta deve ser `Success. No rows returned`.
-
-Pronto: acesse `https://seudominio.com.br/admin` e entre com esse e-mail e
-senha.
-
-> A partir daqui, **os próximos acessos são criados dentro do próprio painel**,
-> em `/admin/usuarios` — não é preciso repetir este processo. Todos os usuários
-> têm os mesmos poderes, inclusive o de liberar e remover outros.
-
-### Se precisar remover um acesso
-
-Remover a pessoa em `/admin/usuarios` já corta o acesso por completo. Fazendo
-pelo Supabase, apague o usuário em **Authentication → Users**: a linha
-correspondente em `admin_users` é removida junto.
-
-### Se esquecer a senha
-
-Em **Authentication → Users**, abra o usuário e use **Reset password**. Se
-preferir definir a senha diretamente, o comando abaixo, rodado da sua máquina,
-redefine a senha de uma conta existente:
-
-```bash
-pnpm --filter landing criar-admin "Nome da Pessoa" email@exemplo.com novaSenha
-```
+As três primeiras e a última vêm do projeto no Supabase; `NEXT_PUBLIC_SITE_URL`
+é o domínio final. As variáveis com prefixo `NEXT_PUBLIC_` são gravadas no site
+durante a build — alterá-las exige uma nova publicação.
 
 ---
 
