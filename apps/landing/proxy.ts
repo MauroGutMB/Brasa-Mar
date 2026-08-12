@@ -53,7 +53,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  if (user && isLogin) {
+  // Quem já entrou não precisa ver o formulário de novo — exceto quando veio
+  // parar aqui *por causa* de um erro. Sem essa ressalva, uma conta que existe
+  // no Supabase Auth mas não está em `admin_users` ficaria em loop: o DAL manda
+  // para o login, o proxy vê o cookie válido e manda de volta.
+  if (user && isLogin && !request.nextUrl.searchParams.has("erro")) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 

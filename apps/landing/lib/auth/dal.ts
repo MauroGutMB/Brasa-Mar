@@ -46,13 +46,31 @@ export const getSession = cache(async (): Promise<Sessao | null> => {
   return { user: admin };
 });
 
-/** Para páginas e actions do admin: corta o fluxo se não houver sessão. */
+/**
+ * Para páginas e actions do admin: corta o fluxo se não houver sessão.
+ *
+ * Distingue os dois motivos de recusa. "Sessão válida, mas sem acesso" é o
+ * estado de quem foi criado no Supabase Auth e ainda não recebeu a linha em
+ * `admin_users` — sem essa distinção a pessoa via só uma página em branco,
+ * porque o proxy devolvia o login para `/admin` num ciclo.
+ */
 export async function requireAdmin(): Promise<AdminUser> {
   const sessao = await getSession();
 
   if (!sessao) {
-    redirect("/admin/login");
+    const autenticado = await temSessaoSupabase();
+    redirect(autenticado ? "/admin/login?erro=sem-acesso" : "/admin/login");
   }
 
   return sessao.user;
+}
+
+/** Há alguém logado no Supabase Auth, mesmo que sem acesso ao painel? */
+async function temSessaoSupabase(): Promise<boolean> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return Boolean(user);
 }

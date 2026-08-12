@@ -1,170 +1,266 @@
-# Brasa e Mar — Monorepo
+# Brasa & Mar
 
-Monorepo do restaurante **Brasa e Mar** (frutos do mar na brasa), gerenciado com
-[Turborepo](https://turborepo.dev) + [pnpm workspaces](https://pnpm.io/workspaces).
+Site institucional do restaurante **Brasa & Mar** — churrasco e frutos do mar,
+em Teresina/PI.
 
-A landing é pública e pré-renderizada; o conteúdo dela vem do Postgres e é
-editado pelo dono em `/admin`, sem deploy.
+A página é pública e pré-renderizada, feita para carregar rápido e aparecer bem
+nas buscas locais. Todo o conteúdo dela — contato, endereço, horários, cardápio,
+fotos e textos — vem do banco e é editado pelo próprio restaurante em `/admin`,
+sem precisar de programador nem de novo deploy: o que é salvo no painel aparece
+no site imediatamente.
 
-## Estrutura
+---
+
+## Tecnologias
+
+| Camada | Escolha | Versão |
+| --- | --- | --- |
+| Framework | [Next.js](https://nextjs.org) (App Router, Cache Components) | 16.3 |
+| Interface | React | 19.2 |
+| Linguagem | TypeScript, em modo estrito | 5.9 |
+| Estilo | [Tailwind CSS](https://tailwindcss.com) v4 (configuração em CSS) | 4.3 |
+| Banco | PostgreSQL com [Drizzle ORM](https://orm.drizzle.team) | 0.44 |
+| Auth e arquivos | [Supabase](https://supabase.com) (Auth + Storage) | 2.86 |
+| Validação | [Zod](https://zod.dev) | 4.1 |
+| Monorepo | [Turborepo](https://turborepo.dev) + [pnpm workspaces](https://pnpm.io/workspaces) | 2.10 |
+| Qualidade | ESLint 9 (flat config) | 9.39 |
+
+Requisitos: **Node 20+**, **pnpm 11** e **Docker** (só para o ambiente de
+desenvolvimento).
+
+### Organização
 
 ```
 BrasaMarWeb/
 ├── apps/
-│   ├── landing/          # Landing page + painel (Next.js 16, App Router)
-│   │   ├── app/
-│   │   │   ├── (site)/   # a landing pública, estática
-│   │   │   └── (admin)/  # /admin/* — painel autenticado, dinâmico
-│   │   ├── components/   # sections/, shared/ e admin/
-│   │   ├── lib/          # data.ts (cache), site.ts (derivações), actions/, auth/
-│   │   ├── scripts/      # criar-admin.ts
-│   │   ├── design/       # referência visual do Claude Design (fora do bundle)
-│   │   └── public/       # og.jpg, favicon…
-│   └── pedidos/          # 🚧 placeholder do futuro app de pedidos
+│   ├── landing/          # site público + painel /admin
+│   └── pedidos/          # reservado para o futuro app de pedidos
 ├── packages/
-│   ├── db/               # schema Drizzle, queries, mutations, validação e seed
-│   ├── ui/               # componentes React + Tailwind compartilhados
-│   └── config/           # eslint/, tailwind/theme.css, tsconfig/
-├── supabase/             # config do Supabase local (npx supabase start)
-├── pnpm-workspace.yaml
-└── turbo.json
+│   ├── db/               # schema, queries, validações e seed
+│   ├── ui/               # componentes compartilhados
+│   └── config/           # ESLint, TypeScript e tema da marca
+└── supabase/             # configuração do ambiente local
 ```
 
-Os pacotes internos usam o prefixo `@brasamar/` e são consumidos via
-`workspace:*` — nada é publicado no npm.
+---
 
 ## Como rodar
 
-Pré-requisitos: **Node 20+**, **pnpm 11** (`corepack enable` resolve) e
-**Docker** para o Supabase local.
+### Desenvolvimento
+
+O ambiente local sobe um Supabase completo em Docker — banco, autenticação e
+armazenamento de arquivos — separado de produção. Dá para editar, apagar e
+testar à vontade sem tocar em dados reais.
 
 ```bash
+# 1. Dependências
 pnpm install
 
-# 1. Sobe Postgres, Auth e Storage locais e imprime as chaves
+# 2. Sobe Postgres, Auth e Storage locais (imprime as chaves ao final)
 npx supabase start
 
-# 2. Preencha os .env com as chaves do passo anterior
+# 3. Configura o ambiente com as chaves do passo anterior
 cp apps/landing/.env.example apps/landing/.env.local
 cp packages/db/.env.example packages/db/.env
 
-# 3. Cria as tabelas e popula com o conteúdo inicial
+# 4. Cria as tabelas e carrega o conteúdo inicial
 pnpm --filter @brasamar/db db:migrate
 pnpm --filter @brasamar/db db:seed
 
-# 4. Cria o primeiro acesso ao painel
+# 5. Cria o primeiro acesso ao painel
 pnpm --filter landing criar-admin "Seu Nome" voce@exemplo.com suaSenhaSegura
 
-# 5. Sobe o site
+# 6. Sobe o site
 pnpm dev
 ```
 
-A landing fica em <http://localhost:3000> e o painel em
-<http://localhost:3000/admin>.
+| Endereço | O que é |
+| --- | --- |
+| <http://localhost:3000> | o site |
+| <http://localhost:3000/admin> | o painel |
+| <http://127.0.0.1:54323> | banco de dados local, em interface visual |
 
-Outros comandos, todos orquestrados pelo Turborepo a partir da raiz:
+`npx supabase stop` desliga o ambiente sem perder os dados.
 
-| Comando            | O que faz                                     |
-| ------------------ | --------------------------------------------- |
-| `pnpm dev`         | modo desenvolvimento (persistente, sem cache) |
-| `pnpm build`       | build de produção de todos os apps            |
-| `pnpm lint`        | ESLint em todos os workspaces                 |
-| `pnpm check-types` | `tsc --noEmit` em todos os workspaces         |
-| `pnpm clean`       | limpa artefatos de build e `node_modules`     |
+### Comandos
 
-No pacote de banco: `db:generate` (gera migration a partir do schema),
-`db:migrate`, `db:seed` e `db:studio` (inspeciona as tabelas no navegador).
+| Comando | O que faz |
+| --- | --- |
+| `pnpm dev` | modo desenvolvimento |
+| `pnpm build` | build de produção |
+| `pnpm lint` | ESLint em todos os pacotes |
+| `pnpm check-types` | checagem de tipos em todos os pacotes |
+| `pnpm clean` | limpa artefatos e dependências |
 
-Para rodar em um workspace específico:
+No pacote de banco (`pnpm --filter @brasamar/db`): `db:generate` cria uma
+migration a partir do schema, `db:migrate` aplica, `db:seed` carrega o conteúdo
+inicial e `db:studio` abre as tabelas no navegador.
+
+Para um pacote específico: `pnpm --filter landing dev`.
+
+Antes de subir mudanças: `pnpm lint && pnpm check-types && pnpm build`.
+
+---
+
+## Produção
+
+O site roda na **Vercel** e o banco, a autenticação e as fotos ficam no
+**Supabase**.
+
+### 1. Criar o projeto no Supabase
+
+Escolha a região **South America (São Paulo)** e guarde a senha do banco pedida
+na criação — ela não pode ser vista depois, só redefinida.
+
+Em seguida, colete estes valores:
+
+| Onde, no painel do Supabase | Valor |
+| --- | --- |
+| Project Settings → API | Project URL |
+| Project Settings → API | chave `anon` |
+| Project Settings → API | chave `service_role` |
+| Project Settings → Database | connection string **Direct** (porta 5432) |
+| Project Settings → Database | connection string **Transaction pooler** (porta 6543) |
+
+> A chave `service_role` tem acesso irrestrito ao banco. Ela só existe no
+> servidor — nunca deve ir para o navegador nem ser compartilhada.
+
+**As duas connection strings têm usos diferentes e não são intercambiáveis:**
+a *direct* aguenta os comandos que criam e alteram tabelas, e é a que você usa
+para preparar o banco; a do *pooler* é a que o site usa em produção, onde cada
+visita pode cair num processo diferente.
+
+### 2. Preparar o banco
+
+Uma vez só, da sua máquina, apontando para o banco novo com a string **direct**:
 
 ```bash
-pnpm --filter landing dev
-pnpm --filter @brasamar/ui lint
+export PROD_DB="postgresql://postgres:[SENHA]@db.xxxxx.supabase.co:5432/postgres"
+
+DATABASE_URL="$PROD_DB" pnpm --filter @brasamar/db db:migrate
+DATABASE_URL="$PROD_DB" pnpm --filter @brasamar/db db:seed
 ```
 
-## O painel (`/admin`)
+O `db:migrate` cria as tabelas, ativa a segurança em todas elas e prepara o
+espaço de armazenamento das fotos. O `db:seed` carrega o conteúdo inicial e pode
+ser executado novamente sem apagar fotos já enviadas.
 
-Todo o conteúdo do site é editável ali, e a mudança aparece na hora — sem
-rebuild, sem deploy:
+### 3. Publicar na Vercel
 
-| Tela                | Edita                                                        |
-| ------------------- | ------------------------------------------------------------ |
-| Pratos              | criar, editar, apagar, reordenar, esconder, enviar fotos, ligar/desligar preços e gerenciar as categorias (nome e cor) |
-| Identidade e SEO    | nome, textos do topo, observação do cardápio, fotos do hero, descrição, palavras-chave e imagem de compartilhamento |
-| Buffet              | textos, ocasiões atendidas e diferenciais numerados          |
-| Contato             | telefone do WhatsApp e e-mail                                |
-| Local e horários    | endereço, coordenadas com prévia do mapa, horário de cada dia |
-| Usuários            | quem entra no painel; todos com os mesmos poderes            |
+1. Importe o repositório na Vercel.
+2. Em **Root Directory**, aponte para **`apps/landing`** — é um monorepo, e sem
+   isso a build tenta construir a raiz.
+3. Cadastre as cinco variáveis de ambiente, marcando **Production** e
+   **Preview**:
 
-Nos campos de texto livre valem três marcadores de destaque: `*palavra*` sai
-laranja, `_palavra_` sai azul e `**palavra**` sai em negrito claro.
+```
+DATABASE_URL                   ← connection string do POOLER (6543)
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+NEXT_PUBLIC_SITE_URL           ← endereço público do site
+```
 
-Só quem tem linha em `admin_users` entra — remover a pessoa ali corta o acesso
-mesmo que o token dela ainda esteja válido.
+4. Faça o deploy.
+5. Com o domínio apontado, atualize `NEXT_PUBLIC_SITE_URL` e **refaça o
+   deploy** — variáveis `NEXT_PUBLIC_*` são gravadas no site durante a build, e
+   mudá-las no painel não altera o que já foi publicado.
 
-## Decisões técnicas
+**Dois pontos que evitam diagnóstico difícil:**
 
-- **TypeScript strict**: `strict: true` mais `noUncheckedIndexedAccess`,
-  `noUnusedLocals` e `noUnusedParameters`, definidos em
-  `packages/config/tsconfig/base.json`.
-- **Tailwind CSS v4 (CSS-first)**: a v4 substituiu o `tailwind.config.js` por
-  configuração em CSS. O tema base da marca vive em
-  `packages/config/tailwind/theme.css` e é importado pelos apps:
+- **A build precisa conseguir acessar o banco.** O conteúdo do site é lido do
+  Postgres e gravado no HTML durante a construção. Com o projeto do Supabase
+  pausado, o deploy falha — não é apenas o site que sai do ar.
+- **A build passa mesmo sem as variáveis do Supabase**, sem nenhum aviso. O
+  deploy fica verde, o site carrega, e só o painel e as fotos deixam de
+  funcionar. Confira as cinco antes de publicar.
 
-  ```css
-  @import "tailwindcss";
-  @import "@brasamar/config/tailwind/theme.css";
-  ```
+> O plano gratuito do Supabase pausa o projeto após cerca de 7 dias sem acesso
+> ao banco. É só reativar no painel deles.
 
-  Tokens disponíveis: `brasa-*` (laranja de fogo), `mar-*` (azul-petróleo),
-  `carvao-*`, `creme`, `font-display`, `font-sans`, `rounded-panel`,
-  `rounded-frame`, `shadow-float`.
-- **A landing continua pré-renderizada**, mesmo lendo do banco: as leituras
-  ficam em escopos `use cache` com tag (`apps/landing/lib/data.ts`), e cada
-  Server Action do painel chama `updateTag` depois de salvar. No `pnpm build`,
-  `/` aparece como `○ Static`; se virar `ƒ`, algo saiu de dentro do cache.
-- **Drizzle + Supabase**: Drizzle cuida do schema e das queries (tipos e
-  migrations versionadas); `supabase-js` entra só para Auth e Storage.
-- **RLS ligada e sem policy** em todas as tabelas: o acesso é sempre pelo
-  servidor, então a chave anon não lê nem escreve nada.
-- **Autorização é no servidor**: `proxy.ts` (o middleware do Next 16) faz só
-  uma checagem otimista de cookie; quem decide é `requireAdmin()`, em
-  `lib/auth/dal.ts`, chamado em toda página do painel e toda Server Action.
-- **`@brasamar/ui` e `@brasamar/db` sem build**: exportam TS/TSX direto e são
-  transpilados pelo consumidor (`transpilePackages` no `next.config.ts`).
-- **`AGENTS.md` / `CLAUDE.md` em `apps/landing`**: gerados automaticamente pelo
-  `next dev` a partir do Next 16 e mantidos fora do git.
+---
 
-## Deploy
+## Criar uma conta de administrador pelo Supabase
 
-Vercel para o site, Supabase para banco, login e fotos:
+Este é o caminho para liberar o primeiro acesso ao `/admin` em produção, sem
+precisar rodar nada pelo terminal.
 
-1. Criar o projeto no [Supabase](https://supabase.com) e pegar, em Project
-   Settings, a URL da API, a chave anon, a service role key e as connection
-   strings (direct na 5432 e pooler na 6543).
-2. Rodar `db:migrate` e `db:seed` apontando para o banco de produção, com a
-   string **direct** — é ela que aguenta criar tabelas. A migration já cria o
-   bucket `fotos`.
-3. Criar o primeiro acesso com `pnpm --filter landing criar-admin`.
-4. Publicar na Vercel com **Root Directory = `apps/landing`** e as cinco
-   variáveis de `apps/landing/.env.example`, usando a string do **pooler** no
-   `DATABASE_URL`.
-5. Com o domínio apontado, atualizar `NEXT_PUBLIC_SITE_URL` e redeployar — essa
-   variável é gravada no site durante o build.
-6. Corrigir endereço e coordenadas em `/admin/local`: os valores do seed vieram
-   como placeholder do mockup.
+São **dois passos, e os dois são obrigatórios**: criar a conta de acesso e
+autorizá-la no painel. Uma conta que existe só no primeiro passo consegue
+digitar a senha, mas recebe a mensagem *"Esta conta existe, mas ainda não tem
+acesso ao painel"* — é essa segunda etapa que concede a permissão.
 
-Dois detalhes que economizam tempo: **o build precisa alcançar o banco** (com o
-projeto do Supabase pausado, o deploy falha, não só o site sai do ar), e **o
-build passa mesmo sem as variáveis do Supabase** — fica tudo verde e só o painel
-e as fotos quebram depois.
+### Passo 1 — criar a conta de acesso
 
-> Projeto grátis do Supabase pausa depois de ~7 dias sem uso.
+1. No painel do Supabase, vá em **Authentication → Users**.
+2. Clique em **Add user → Create new user**.
+3. Preencha o e-mail e uma senha com no mínimo 8 caracteres.
+4. Marque **Auto Confirm User** — sem isso a conta fica aguardando confirmação
+   por e-mail e o login não funciona.
+5. Confirme. O usuário aparece na lista.
+6. **Copie o UID** dele (a coluna `User UID`, algo como
+   `2e41800c-f136-4b5f-96fd-dffa15911116`).
 
-## Próximos passos
+### Passo 2 — autorizar no painel
 
-1. Colocar as fotos reais (pratos, hero e buffet) pelo painel e a `og.jpg` em
-   `apps/landing/public/`.
-2. Preencher endereço, CEP e coordenadas reais em `/admin/local`.
-3. Iniciar `apps/pedidos` reaproveitando `@brasamar/ui`, `@brasamar/db` e
-   `@brasamar/config`.
+1. Vá em **SQL Editor** e clique em **New query**.
+2. Cole o comando abaixo, trocando os três valores pelos seus:
+
+```sql
+insert into admin_users (id, email, name)
+values (
+  '2e41800c-f136-4b5f-96fd-dffa15911116',  -- o UID copiado no passo 1
+  'dono@brasaemar.com.br',                 -- o mesmo e-mail do passo 1
+  'Nome da Pessoa'                         -- como aparecerá no painel
+);
+```
+
+3. Clique em **Run**. A resposta deve ser `Success. No rows returned`.
+
+Pronto: acesse `https://seudominio.com.br/admin` e entre com esse e-mail e
+senha.
+
+> A partir daqui, **os próximos acessos são criados dentro do próprio painel**,
+> em `/admin/usuarios` — não é preciso repetir este processo. Todos os usuários
+> têm os mesmos poderes, inclusive o de liberar e remover outros.
+
+### Se precisar remover um acesso
+
+Remover a pessoa em `/admin/usuarios` já corta o acesso por completo. Fazendo
+pelo Supabase, apague o usuário em **Authentication → Users**: a linha
+correspondente em `admin_users` é removida junto.
+
+### Se esquecer a senha
+
+Em **Authentication → Users**, abra o usuário e use **Reset password**. Se
+preferir definir a senha diretamente, o comando abaixo, rodado da sua máquina,
+redefine a senha de uma conta existente:
+
+```bash
+pnpm --filter landing criar-admin "Nome da Pessoa" email@exemplo.com novaSenha
+```
+
+---
+
+## O painel
+
+| Tela | O que edita |
+| --- | --- |
+| **Pratos** | criar, editar, apagar, reordenar e esconder pratos; enviar fotos; mostrar ou ocultar os preços; gerenciar as categorias, com nome e cor |
+| **Identidade e SEO** | nome, textos do topo, fotos principais, descrição para buscadores, palavras-chave e imagem de compartilhamento |
+| **Buffet** | textos da seção de eventos, ocasiões atendidas e diferenciais |
+| **Contato** | telefone do WhatsApp e e-mail |
+| **Local e horários** | endereço, localização no mapa e horário de cada dia da semana |
+| **Usuários** | quem tem acesso ao painel |
+
+Nos campos de texto livre, três marcações criam destaque: `*palavra*` fica
+laranja, `_palavra_` fica azul e `**palavra**` fica em negrito.
+
+Fotos aceitas: JPG, PNG, WebP ou AVIF, até 5 MB.
+
+---
+
+## Créditos
+
+Desenvolvido por **Mauro Gutemberg Magalhães Barros** para o restaurante
+**Brasa & Mar**.

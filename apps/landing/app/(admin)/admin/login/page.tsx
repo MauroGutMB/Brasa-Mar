@@ -14,9 +14,9 @@ export const instant = false;
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ proximo?: string }>;
+  searchParams: Promise<{ proximo?: string; erro?: string }>;
 }) {
-  const { proximo } = await searchParams;
+  const { proximo, erro } = await searchParams;
 
   return (
     <div className="grid min-h-dvh place-items-center bg-carvao-950 px-6 py-12">
@@ -28,7 +28,7 @@ export default async function LoginPage({
           </p>
         </div>
 
-        <LoginForm proximo={proximo} />
+        <LoginForm proximo={proximo} semAcesso={erro === "sem-acesso"} />
 
         <p className="mt-8 text-center text-[13px] text-creme/40">
           <Link href="/" className="text-inherit hover:text-brasa-500">
