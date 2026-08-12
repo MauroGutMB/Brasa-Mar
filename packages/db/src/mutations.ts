@@ -37,7 +37,17 @@ async function patchSettings(patch: SiteSettingsUpdate): Promise<void> {
     .where(eq(siteSettings.id, SETTINGS_ID));
 }
 
-export async function updateIdentity(input: IdentityInput): Promise<void> {
+/** URLs resolvidas pelos uploads da Server Action, não pelo formulário. */
+export interface IdentityImages {
+  heroImageUrl: string | null;
+  heroSecondaryImageUrl: string | null;
+  ogImageUrl: string;
+}
+
+export async function updateIdentity(
+  input: IdentityInput,
+  imagens: IdentityImages,
+): Promise<void> {
   await patchSettings({
     name: input.name,
     tagline: input.tagline,
@@ -47,15 +57,19 @@ export async function updateIdentity(input: IdentityInput): Promise<void> {
     heroTitleLine2: input.heroTitleLine2,
     heroBadge: input.heroBadge,
     heroText: input.heroText,
-    heroImageUrl: input.heroImageUrl,
+    heroImageUrl: imagens.heroImageUrl,
     heroImageAlt: input.heroImageAlt,
-    heroSecondaryImageUrl: input.heroSecondaryImageUrl,
+    heroSecondaryImageUrl: imagens.heroSecondaryImageUrl,
     heroSecondaryImageAlt: input.heroSecondaryImageAlt,
     dishesNote: input.dishesNote,
     seoKeywords: input.seoKeywords,
-    ogImageUrl: input.ogImageUrl,
-    showPrices: input.showPrices,
+    ogImageUrl: imagens.ogImageUrl,
   });
+}
+
+/** Liga e desliga os preços do cardápio inteiro. Botão próprio no painel. */
+export async function setShowPrices(showPrices: boolean): Promise<void> {
+  await patchSettings({ showPrices });
 }
 
 export async function updateContact(input: ContactInput): Promise<void> {
@@ -76,7 +90,11 @@ export async function updateLocation(input: LocationInput): Promise<void> {
   });
 }
 
-export async function updateBuffet(input: BuffetInput): Promise<void> {
+/** `imageUrl` vem do upload, não do formulário — ver a action que chama. */
+export async function updateBuffet(
+  input: BuffetInput,
+  imageUrl: string | null,
+): Promise<void> {
   const occasions: BuffetOccasion[] = input.occasions.map((label) => ({
     label,
   }));
@@ -93,7 +111,7 @@ export async function updateBuffet(input: BuffetInput): Promise<void> {
     buffetText: input.buffetText,
     buffetFeaturesIntro: input.buffetFeaturesIntro,
     buffetClosing: input.buffetClosing,
-    buffetImageUrl: input.buffetImageUrl,
+    buffetImageUrl: imageUrl,
     buffetImageAlt: input.buffetImageAlt,
     buffetOccasions: occasions,
     buffetFeatures: features,
@@ -118,13 +136,17 @@ export async function updateOpeningHours(
   });
 }
 
-export async function createDish(input: DishInput): Promise<Dish> {
+/** `imageUrl` vem do upload, não do formulário — ver a action que chama. */
+export async function createDish(
+  input: DishInput,
+  imageUrl: string | null,
+): Promise<Dish> {
   // Entra no fim da lista, como no admin de qualquer CMS.
   const [{ next } = { next: 0 }] = await db
     .select({ next: raw<number>`coalesce(max(${dishes.position}), -1) + 1` })
     .from(dishes);
 
-  const novo: NewDish = { ...input, position: next };
+  const novo: NewDish = { ...input, imageUrl, position: next };
   const [criado] = await db.insert(dishes).values(novo).returning();
 
   if (!criado) {
@@ -134,8 +156,15 @@ export async function createDish(input: DishInput): Promise<Dish> {
   return criado;
 }
 
-export async function updateDish(id: string, input: DishInput): Promise<void> {
-  await db.update(dishes).set(input).where(eq(dishes.id, id));
+export async function updateDish(
+  id: string,
+  input: DishInput,
+  imageUrl: string | null,
+): Promise<void> {
+  await db
+    .update(dishes)
+    .set({ ...input, imageUrl })
+    .where(eq(dishes.id, id));
 }
 
 export async function deleteDish(id: string): Promise<void> {

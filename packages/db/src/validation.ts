@@ -22,12 +22,6 @@ const checkbox = z.preprocess(
   z.boolean(),
 );
 
-/** URL de imagem já hospedada, ou vazio para "sem foto". */
-const imagemUrl = z.preprocess(
-  (value) => (typeof value === "string" && value.trim() === "" ? null : value),
-  z.url("Informe uma URL válida").nullable().default(null),
-);
-
 /** "89", "89,50" e "89.50" viram 8900 e 8950. */
 export const precoEmCentavos = z
   .string()
@@ -67,6 +61,12 @@ const listaPorLinha = z
       .filter((linha) => linha.length > 0),
   );
 
+/**
+ * As imagens não são campos deste schema: elas vêm dos uploads, resolvidos na
+ * Server Action, que junta as URLs depois. Aqui ficam só os textos.
+ *
+ * `showPrices` também está fora: virou um botão próprio, com efeito imediato.
+ */
 export const identitySchema = z.object({
   name: texto(120),
   tagline: texto(160),
@@ -76,14 +76,10 @@ export const identitySchema = z.object({
   heroTitleLine2: texto(80),
   heroBadge: texto(120),
   heroText: texto(2000),
-  heroImageUrl: imagemUrl,
   heroImageAlt: texto(200),
-  heroSecondaryImageUrl: imagemUrl,
   heroSecondaryImageAlt: texto(200),
   dishesNote: textoOpcional(300),
   seoKeywords: listaPorVirgula,
-  ogImageUrl: texto(500),
-  showPrices: checkbox,
 });
 
 export const contactSchema = z.object({
@@ -132,13 +128,16 @@ export const openingHoursSchema = z
     });
   });
 
+/**
+ * A foto do buffet não é campo do formulário: ela vem do upload, resolvido na
+ * Server Action. O schema valida só o resto, e a action junta a URL depois.
+ */
 export const buffetSchema = z.object({
   buffetEyebrow: texto(120),
   buffetBadge: texto(120),
   buffetText: texto(2000),
   buffetFeaturesIntro: textoOpcional(300),
   buffetClosing: textoOpcional(300),
-  buffetImageUrl: imagemUrl,
   buffetImageAlt: texto(200),
   occasions: listaPorLinha,
   features: listaPorLinha,
@@ -158,7 +157,6 @@ export const dishSchema = z.object({
   priceCents: precoEmCentavos,
   description: texto(1000),
   tag: z.enum(["carnes", "mar", "para-dividir"]),
-  imageUrl: imagemUrl,
   imageAlt: textoOpcional(200),
   visible: checkbox,
 });

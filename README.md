@@ -137,19 +137,29 @@ mesmo que o token dela ainda esteja válido.
 
 ## Deploy
 
-1. Criar um projeto no [Supabase](https://supabase.com) e pegar, em Project
-   Settings, a URL da API, a chave anon, a service role key e a connection
-   string do pooler (Transaction, porta 6543).
-2. Configurar essas variáveis no host (ver `apps/landing/.env.example`), mais
-   `NEXT_PUBLIC_SITE_URL` com o domínio final.
-3. Rodar `pnpm --filter @brasamar/db db:migrate` e `db:seed` apontando para o
-   banco de produção. A migration já cria o bucket `fotos`.
-4. Criar o primeiro acesso com `pnpm --filter landing criar-admin`.
-5. Trocar o endereço e as coordenadas em `/admin/local` — os valores do seed
-   vieram como placeholder do mockup.
+Vercel para o site, Supabase para banco, login e fotos:
 
-> Projeto grátis do Supabase pausa depois de ~7 dias sem uso, e a primeira
-> visita depois disso falha até religar no painel deles.
+1. Criar o projeto no [Supabase](https://supabase.com) e pegar, em Project
+   Settings, a URL da API, a chave anon, a service role key e as connection
+   strings (direct na 5432 e pooler na 6543).
+2. Rodar `db:migrate` e `db:seed` apontando para o banco de produção, com a
+   string **direct** — é ela que aguenta criar tabelas. A migration já cria o
+   bucket `fotos`.
+3. Criar o primeiro acesso com `pnpm --filter landing criar-admin`.
+4. Publicar na Vercel com **Root Directory = `apps/landing`** e as cinco
+   variáveis de `apps/landing/.env.example`, usando a string do **pooler** no
+   `DATABASE_URL`.
+5. Com o domínio apontado, atualizar `NEXT_PUBLIC_SITE_URL` e redeployar — essa
+   variável é gravada no site durante o build.
+6. Corrigir endereço e coordenadas em `/admin/local`: os valores do seed vieram
+   como placeholder do mockup.
+
+Dois detalhes que economizam tempo: **o build precisa alcançar o banco** (com o
+projeto do Supabase pausado, o deploy falha, não só o site sai do ar), e **o
+build passa mesmo sem as variáveis do Supabase** — fica tudo verde e só o painel
+e as fotos quebram depois.
+
+> Projeto grátis do Supabase pausa depois de ~7 dias sem uso.
 
 ## Próximos passos
 

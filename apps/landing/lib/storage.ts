@@ -89,3 +89,35 @@ export async function removerImagem(url: string | null): Promise<void> {
 export function arquivoVazio(valor: FormDataEntryValue | null): boolean {
   return !(valor instanceof File) || valor.size === 0;
 }
+
+/**
+ * Resolve a foto a partir do que veio do formulário.
+ *
+ * Três caminhos: enviou arquivo novo (sobe e descarta o antigo), marcou
+ * "remover foto" (limpa) ou não mexeu (mantém o que está). Usado pelos pratos
+ * e pelo buffet — os campos do formulário têm os mesmos nomes nos dois.
+ *
+ * @param prefixo caminho dentro do bucket, sem extensão (ex.: "pratos/moqueca")
+ * @param atual   URL que está salva hoje, para poder apagar o arquivo trocado
+ */
+export async function resolverFoto(
+  formData: FormData,
+  prefixo: string,
+  atual: string | null,
+  campo = "foto",
+): Promise<string | null> {
+  const arquivo = formData.get(campo);
+
+  if (!arquivoVazio(arquivo)) {
+    const { url } = await uploadImagem(arquivo as File, prefixo);
+    await removerImagem(atual);
+    return url;
+  }
+
+  if (formData.get(`remover-${campo}`) === "on") {
+    await removerImagem(atual);
+    return null;
+  }
+
+  return atual;
+}

@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import type { SiteSettings } from "@brasamar/db";
 import { Field, Input, Textarea } from "@brasamar/ui";
 
+import { PhotoField } from "@/components/admin/photo-field";
 import { SaveBar } from "@/components/admin/save-bar";
 import { Secao } from "@/components/admin/secao";
 import { initialFormState } from "@/lib/actions/form-state";
@@ -15,6 +16,7 @@ const AJUDA_MARCADORES =
 
 export function BuffetForm({ settings }: { settings: SiteSettings }) {
   const [estado, action] = useActionState(saveBuffet, initialFormState);
+  const [erroFoto, setErroFoto] = useState<string>();
 
   return (
     <form action={action} className="flex flex-col gap-10">
@@ -135,40 +137,26 @@ export function BuffetForm({ settings }: { settings: SiteSettings }) {
       </Secao>
 
       <Secao titulo="Foto">
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Field
-            label="Foto do buffet (URL)"
-            error={estado.errors?.buffetImageUrl}
-            hint="Deixe vazio para manter o placeholder tracejado."
-          >
-            {(props) => (
-              <Input
-                {...props}
-                name="buffetImageUrl"
-                defaultValue={settings.buffetImageUrl ?? ""}
-                placeholder="https://…"
-              />
-            )}
-          </Field>
+        <PhotoField atual={settings.buffetImageUrl} onErro={setErroFoto} />
 
-          <Field
-            label="Descrição da foto"
-            error={estado.errors?.buffetImageAlt}
-            required
-          >
-            {(props) => (
-              <Input
-                {...props}
-                name="buffetImageAlt"
-                defaultValue={settings.buffetImageAlt}
-                required
-              />
-            )}
-          </Field>
-        </div>
+        <Field
+          label="Descrição da foto"
+          error={estado.errors?.buffetImageAlt}
+          hint="Lida por leitores de tela e usada pelo Google nas buscas por imagem."
+          required
+        >
+          {(props) => (
+            <Input
+              {...props}
+              name="buffetImageAlt"
+              defaultValue={settings.buffetImageAlt}
+              required
+            />
+          )}
+        </Field>
       </Secao>
 
-      <SaveBar estado={estado} />
+      <SaveBar estado={estado} bloqueado={Boolean(erroFoto)} />
     </form>
   );
 }

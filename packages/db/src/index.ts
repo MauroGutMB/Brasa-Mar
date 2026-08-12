@@ -39,6 +39,7 @@ export {
   reorderDishes,
   setDishImage,
   setDishVisibility,
+  setShowPrices,
   updateBuffet,
   updateContact,
   updateDish,

@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { useActionState, useState } from "react";
 
 import type { Dish } from "@brasamar/db";
 import { slugify } from "@brasamar/db/validation";
 import { Field, Input, Select, Textarea, Toggle } from "@brasamar/ui";
 
+import { PhotoField } from "@/components/admin/photo-field";
 import { SaveBar } from "@/components/admin/save-bar";
 import { Secao } from "@/components/admin/secao";
 import { createDishAction, updateDishAction } from "@/lib/actions/dishes";
@@ -17,9 +17,6 @@ const TAGS = [
   { value: "mar", label: "Mar" },
   { value: "para-dividir", label: "Para dividir" },
 ];
-
-/** Mesmo limite validado no servidor, em lib/storage.ts. */
-const LIMITE_BYTES = 5 * 1024 * 1024;
 
 /** Centavos → "89" / "89,50", que é como o campo aceita de volta. */
 function precoParaCampo(priceCents: number): string {
@@ -36,7 +33,6 @@ export function DishForm({ dish }: { dish?: Dish }) {
   // No prato novo, o endereço acompanha o nome até a pessoa mexer nele.
   const [slug, setSlug] = useState(dish?.slug ?? "");
   const [slugManual, setSlugManual] = useState(Boolean(dish));
-  const [removerFoto, setRemoverFoto] = useState(false);
   const [erroFoto, setErroFoto] = useState<string>();
 
   return (
@@ -129,65 +125,11 @@ export function DishForm({ dish }: { dish?: Dish }) {
       </Secao>
 
       <Secao titulo="Foto">
-        {dish?.imageUrl ? (
-          <div className="flex flex-wrap items-center gap-5">
-            <div className="relative h-[110px] w-[160px] overflow-hidden rounded-md border border-creme/15">
-              <Image
-                src={dish.imageUrl}
-                alt={dish.imageAlt || dish.name}
-                fill
-                sizes="160px"
-                className="object-cover"
-              />
-            </div>
-
-            <label className="flex cursor-pointer items-center gap-2 text-[13.5px] text-creme/70">
-              <input
-                type="checkbox"
-                name="remover-foto"
-                checked={removerFoto}
-                onChange={(event) => setRemoverFoto(event.target.checked)}
-                className="size-4 accent-brasa-500"
-              />
-              Remover a foto atual
-            </label>
-          </div>
-        ) : (
-          <p className="text-[13.5px] text-creme/40">
-            Sem foto — o card aparece com o placeholder tracejado.
-          </p>
-        )}
-
-        <Field
-          label={dish?.imageUrl ? "Trocar por outra foto" : "Enviar foto"}
-          hint="JPG, PNG, WebP ou AVIF, até 5 MB. Fotos deitadas ficam melhores."
-          error={erroFoto}
-        >
-          {(props) => (
-            <input
-              {...props}
-              type="file"
-              name="foto"
-              accept="image/jpeg,image/png,image/webp,image/avif"
-              disabled={removerFoto}
-              onChange={(event) => {
-                // Checagem no navegador para a pessoa não esperar o upload
-                // inteiro só para receber "passou do limite".
-                const arquivo = event.target.files?.[0];
-                const excedeu = arquivo ? arquivo.size > LIMITE_BYTES : false;
-
-                setErroFoto(
-                  excedeu
-                    ? `Essa imagem tem ${(arquivo!.size / 1024 / 1024).toFixed(1)} MB — o limite é 5 MB.`
-                    : undefined,
-                );
-
-                if (excedeu) event.target.value = "";
-              }}
-              className="w-full text-[13.5px] text-creme/60 file:mr-4 file:rounded-md file:border-0 file:bg-creme/10 file:px-4 file:py-2 file:text-[13px] file:text-creme hover:file:bg-creme/15 disabled:opacity-40"
-            />
-          )}
-        </Field>
+        <PhotoField
+          atual={dish?.imageUrl ?? null}
+          vazio="Sem foto — o card aparece com o placeholder tracejado."
+          onErro={setErroFoto}
+        />
 
         <Field
           label="Descrição da foto"

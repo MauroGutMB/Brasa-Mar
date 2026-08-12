@@ -8,6 +8,8 @@ import {
   openingHoursSchema,
 } from "@brasamar/db/validation";
 import {
+  getSiteSettings,
+  setShowPrices,
   updateBuffet,
   updateContact,
   updateIdentity,
@@ -15,6 +17,8 @@ import {
   updateOpeningHours,
 } from "@brasamar/db";
 import { updateTag } from "next/cache";
+
+import { UploadError, resolverFoto } from "@/lib/storage";
 
 import {
   erro,
@@ -33,6 +37,9 @@ import { CACHE_TAGS } from "@/lib/cache-tags";
  * cache na hora, para o dono ver a mudança no site imediatamente.
  */
 
+/** Imagem de compartilhamento padrão, servida de `public/`. */
+const OG_PADRAO = "/og.jpg";
+
 export async function saveIdentity(
   _estado: FormState,
   formData: FormData,
@@ -45,10 +52,58 @@ export async function saveIdentity(
     return erro("Confira os campos destacados.", zodErrors(parsed.error));
   }
 
-  await updateIdentity(parsed.data);
+  const atual = await getSiteSettings();
+  let imagens;
+
+  try {
+    // A og fica no bucket só quando foi enviada; removida, volta para o
+    // arquivo estático em public/ — a coluna não aceita nulo.
+    const og = await resolverFoto(
+      formData,
+      "site/compartilhamento",
+      atual.ogImageUrl.startsWith("http") ? atual.ogImageUrl : null,
+      "foto-og",
+    );
+
+    imagens = {
+      heroImageUrl: await resolverFoto(
+        formData,
+        "hero/principal",
+        atual.heroImageUrl,
+        "foto-hero",
+      ),
+      heroSecondaryImageUrl: await resolverFoto(
+        formData,
+        "hero/secundaria",
+        atual.heroSecondaryImageUrl,
+        "foto-hero-2",
+      ),
+      ogImageUrl: og ?? OG_PADRAO,
+    };
+  } catch (falha) {
+    if (falha instanceof UploadError) return erro(falha.message);
+    throw falha;
+  }
+
+  await updateIdentity(parsed.data, imagens);
   updateTag(CACHE_TAGS.settings);
 
   return sucesso("Identidade e SEO atualizados.");
+}
+
+/**
+ * Liga/desliga os preços do cardápio.
+ *
+ * Ação própria, sem formulário: o botão manda o estado desejado e o efeito é
+ * imediato no site.
+ */
+export async function toggleShowPricesAction(
+  showPrices: boolean,
+): Promise<void> {
+  await requireAdmin();
+
+  await setShowPrices(showPrices);
+  updateTag(CACHE_TAGS.settings);
 }
 
 export async function saveContact(
@@ -99,7 +154,19 @@ export async function saveBuffet(
     return erro("Confira os campos destacados.", zodErrors(parsed.error));
   }
 
-  await updateBuffet(parsed.data);
+  // A foto atual vem do banco, não do formulário: é ela que diz qual arquivo
+  // apagar do bucket quando a pessoa troca ou remove a imagem.
+  const { buffetImageUrl: atual } = await getSiteSettings();
+  let imageUrl: string | null;
+
+  try {
+    imageUrl = await resolverFoto(formData, "buffet/buffet", atual);
+  } catch (falha) {
+    if (falha instanceof UploadError) return erro(falha.message);
+    throw falha;
+  }
+
+  await updateBuffet(parsed.data, imageUrl);
   updateTag(CACHE_TAGS.settings);
 
   return sucesso("Buffet atualizado.");

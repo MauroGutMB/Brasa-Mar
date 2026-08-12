@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import type { SiteSettings } from "@brasamar/db";
-import { Field, Input, Textarea, Toggle } from "@brasamar/ui";
+import { Field, Input, Textarea } from "@brasamar/ui";
 
+import { PhotoField } from "@/components/admin/photo-field";
 import { SaveBar } from "@/components/admin/save-bar";
 import { Secao } from "@/components/admin/secao";
 import { initialFormState } from "@/lib/actions/form-state";
@@ -15,6 +16,18 @@ const AJUDA_MARCADORES =
 
 export function IdentityForm({ settings }: { settings: SiteSettings }) {
   const [estado, action] = useActionState(saveIdentity, initialFormState);
+
+  // Três uploads na mesma tela: guardo o erro de cada um para saber se ainda
+  // resta algum impedindo o envio.
+  const [errosFoto, setErrosFoto] = useState<Record<string, string>>({});
+
+  function reportarFoto(campo: string, mensagem?: string) {
+    setErrosFoto(({ [campo]: _removido, ...resto }) =>
+      mensagem ? { ...resto, [campo]: mensagem } : resto,
+    );
+  }
+
+  const erroFoto = Object.keys(errosFoto).length > 0;
 
   return (
     <form action={action} className="flex flex-col gap-10">
@@ -118,68 +131,59 @@ export function IdentityForm({ settings }: { settings: SiteSettings }) {
           )}
         </Field>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Field
-            label="Foto principal (URL)"
-            error={estado.errors?.heroImageUrl}
-            hint="Deixe vazio para manter o placeholder tracejado."
-          >
-            {(props) => (
-              <Input
-                {...props}
-                name="heroImageUrl"
-                defaultValue={settings.heroImageUrl ?? ""}
-                placeholder="https://…"
-              />
-            )}
-          </Field>
-
-          <Field
-            label="Descrição da foto principal"
-            error={estado.errors?.heroImageAlt}
-            hint="Lida por leitores de tela e pelo Google."
-            required
-          >
-            {(props) => (
-              <Input
-                {...props}
-                name="heroImageAlt"
-                defaultValue={settings.heroImageAlt}
-                required
-              />
-            )}
-          </Field>
+        <div className="rounded-md border border-creme/10 p-5">
+          <p className="mb-4 text-[13px] font-semibold text-creme">
+            Foto principal
+          </p>
+          <div className="flex flex-col gap-6">
+            <PhotoField
+              atual={settings.heroImageUrl}
+              name="foto-hero"
+              onErro={(m) => reportarFoto("hero", m)}
+            />
+            <Field
+              label="Descrição da foto principal"
+              error={estado.errors?.heroImageAlt}
+              hint="Lida por leitores de tela e pelo Google."
+              required
+            >
+              {(props) => (
+                <Input
+                  {...props}
+                  name="heroImageAlt"
+                  defaultValue={settings.heroImageAlt}
+                  required
+                />
+              )}
+            </Field>
+          </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Field
-            label="Foto secundária (URL)"
-            error={estado.errors?.heroSecondaryImageUrl}
-          >
-            {(props) => (
-              <Input
-                {...props}
-                name="heroSecondaryImageUrl"
-                defaultValue={settings.heroSecondaryImageUrl ?? ""}
-                placeholder="https://…"
-              />
-            )}
-          </Field>
-
-          <Field
-            label="Descrição da foto secundária"
-            error={estado.errors?.heroSecondaryImageAlt}
-            required
-          >
-            {(props) => (
-              <Input
-                {...props}
-                name="heroSecondaryImageAlt"
-                defaultValue={settings.heroSecondaryImageAlt}
-                required
-              />
-            )}
-          </Field>
+        <div className="rounded-md border border-creme/10 p-5">
+          <p className="mb-4 text-[13px] font-semibold text-creme">
+            Foto secundária
+          </p>
+          <div className="flex flex-col gap-6">
+            <PhotoField
+              atual={settings.heroSecondaryImageUrl}
+              name="foto-hero-2"
+              onErro={(m) => reportarFoto("hero2", m)}
+            />
+            <Field
+              label="Descrição da foto secundária"
+              error={estado.errors?.heroSecondaryImageAlt}
+              required
+            >
+              {(props) => (
+                <Input
+                  {...props}
+                  name="heroSecondaryImageAlt"
+                  defaultValue={settings.heroSecondaryImageAlt}
+                  required
+                />
+              )}
+            </Field>
+          </div>
         </div>
       </Secao>
 
@@ -198,13 +202,6 @@ export function IdentityForm({ settings }: { settings: SiteSettings }) {
             />
           )}
         </Field>
-
-        <Toggle
-          name="showPrices"
-          defaultChecked={settings.showPrices}
-          label="Mostrar preços no cardápio"
-          hint="Desligando, os valores somem de todos os pratos de uma vez."
-        />
       </Secao>
 
       <Secao titulo="Busca e compartilhamento">
@@ -240,24 +237,28 @@ export function IdentityForm({ settings }: { settings: SiteSettings }) {
           )}
         </Field>
 
-        <Field
-          label="Imagem de compartilhamento"
-          error={estado.errors?.ogImageUrl}
-          hint="A imagem que aparece ao mandar o link no WhatsApp. Ideal 1200×630."
-          required
-        >
-          {(props) => (
-            <Input
-              {...props}
-              name="ogImageUrl"
-              defaultValue={settings.ogImageUrl}
-              required
-            />
-          )}
-        </Field>
+        <div className="rounded-md border border-creme/10 p-5">
+          <p className="mb-1.5 text-[13px] font-semibold text-creme">
+            Imagem de compartilhamento
+          </p>
+          <p className="mb-4 text-[13px] leading-snug text-creme/45">
+            É o que aparece quando alguém manda o link do site no WhatsApp.
+            Formato deitado, 1200×630 fica exato.
+          </p>
+          <PhotoField
+            atual={
+              settings.ogImageUrl.startsWith("http")
+                ? settings.ogImageUrl
+                : null
+            }
+            name="foto-og"
+            vazio={`Usando a imagem padrão do site (${settings.ogImageUrl}).`}
+            onErro={(m) => reportarFoto("og", m)}
+          />
+        </div>
       </Secao>
 
-      <SaveBar estado={estado} />
+      <SaveBar estado={estado} bloqueado={Boolean(erroFoto)} />
     </form>
   );
 }

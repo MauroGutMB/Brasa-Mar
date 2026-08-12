@@ -1,9 +1,10 @@
 import Link from "next/link";
 
-import { getAllDishes } from "@brasamar/db";
+import { getAllDishes, getSiteSettings } from "@brasamar/db";
 
 import { DishList } from "@/components/admin/dish-list";
 import { PageHeader } from "@/components/admin/page-header";
+import { PricesToggle } from "@/components/admin/prices-toggle";
 import { requireAdmin } from "@/lib/auth/dal";
 
 /** Espera a sessão antes de renderizar; ver o layout do painel. */
@@ -11,7 +12,10 @@ export const instant = false;
 
 export default async function PratosPage() {
   await requireAdmin();
-  const dishes = await getAllDishes();
+  const [dishes, settings] = await Promise.all([
+    getAllDishes(),
+    getSiteSettings(),
+  ]);
 
   return (
     <>
@@ -26,6 +30,10 @@ export default async function PratosPage() {
         >
           Novo prato
         </Link>
+      </div>
+
+      <div className="mb-7">
+        <PricesToggle showPrices={settings.showPrices} />
       </div>
 
       <DishList dishes={dishes} />

@@ -21,42 +21,10 @@ import {
 } from "@/lib/actions/form-state";
 import { requireAdmin } from "@/lib/auth/dal";
 import { CACHE_TAGS } from "@/lib/cache-tags";
-import {
-  UploadError,
-  arquivoVazio,
-  removerImagem,
-  uploadImagem,
-} from "@/lib/storage";
+import { UploadError, removerImagem, resolverFoto } from "@/lib/storage";
 
 function invalidar(): void {
   updateTag(CACHE_TAGS.dishes);
-}
-
-/**
- * Resolve a foto do prato a partir do formulário.
- *
- * Três caminhos: enviou arquivo novo (sobe e troca), marcou "remover foto"
- * (limpa) ou não mexeu (mantém a que está).
- */
-async function resolverFoto(
-  formData: FormData,
-  slug: string,
-  atual: string | null,
-): Promise<string | null> {
-  const arquivo = formData.get("foto");
-
-  if (!arquivoVazio(arquivo)) {
-    const { url } = await uploadImagem(arquivo as File, `pratos/${slug}`);
-    await removerImagem(atual);
-    return url;
-  }
-
-  if (formData.get("remover-foto") === "on") {
-    await removerImagem(atual);
-    return null;
-  }
-
-  return atual;
 }
 
 export async function createDishAction(
@@ -65,11 +33,7 @@ export async function createDishAction(
 ): Promise<FormState> {
   await requireAdmin();
 
-  const parsed = dishSchema.safeParse({
-    ...Object.fromEntries(formData),
-    // A URL da foto não vem do formulário: é resultado do upload.
-    imageUrl: "",
-  });
+  const parsed = dishSchema.safeParse(Object.fromEntries(formData));
 
   if (!parsed.success) {
     return erro("Confira os campos destacados.", zodErrors(parsed.error));
@@ -84,13 +48,13 @@ export async function createDishAction(
   let imageUrl: string | null = null;
 
   try {
-    imageUrl = await resolverFoto(formData, parsed.data.slug, null);
+    imageUrl = await resolverFoto(formData, `pratos/${parsed.data.slug}`, null);
   } catch (falha) {
     if (falha instanceof UploadError) return erro(falha.message);
     throw falha;
   }
 
-  await createDish({ ...parsed.data, imageUrl });
+  await createDish(parsed.data, imageUrl);
   invalidar();
 
   redirect("/admin/pratos");
@@ -103,10 +67,7 @@ export async function updateDishAction(
 ): Promise<FormState> {
   await requireAdmin();
 
-  const parsed = dishSchema.safeParse({
-    ...Object.fromEntries(formData),
-    imageUrl: "",
-  });
+  const parsed = dishSchema.safeParse(Object.fromEntries(formData));
 
   if (!parsed.success) {
     return erro("Confira os campos destacados.", zodErrors(parsed.error));
@@ -125,13 +86,17 @@ export async function updateDishAction(
   let imageUrl: string | null;
 
   try {
-    imageUrl = await resolverFoto(formData, parsed.data.slug, dish.imageUrl);
+    imageUrl = await resolverFoto(
+      formData,
+      `pratos/${parsed.data.slug}`,
+      dish.imageUrl,
+    );
   } catch (falha) {
     if (falha instanceof UploadError) return erro(falha.message);
     throw falha;
   }
 
-  await updateDish(dish.id, { ...parsed.data, imageUrl });
+  await updateDish(dish.id, parsed.data, imageUrl);
   invalidar();
 
   return sucesso("Prato atualizado.");
