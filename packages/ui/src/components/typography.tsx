@@ -2,30 +2,26 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "../lib/cn";
 
-export type HeadingLevel = 1 | 2 | 3 | 4;
+export type HeadingLevel = 1 | 2 | 3;
 
+/** Escalas fluidas vindas do mockup — clamp(min, preferido, max). */
 const headingClasses: Record<HeadingLevel, string> = {
-  1: "text-4xl sm:text-5xl lg:text-6xl",
-  2: "text-3xl sm:text-4xl",
-  3: "text-2xl sm:text-3xl",
-  4: "text-xl sm:text-2xl",
+  1: "text-[clamp(2.5rem,6.4vw,5.75rem)] leading-[0.98] tracking-[0.01em]",
+  2: "text-[clamp(2.125rem,4vw,3.5rem)] leading-[1.05]",
+  3: "text-[1.3125rem] font-semibold leading-[1.2]",
 };
 
 export interface HeadingProps extends HTMLAttributes<HTMLHeadingElement> {
   level?: HeadingLevel;
 }
 
-export function Heading({
-  level = 2,
-  className,
-  ...props
-}: HeadingProps) {
+export function Heading({ level = 2, className, ...props }: HeadingProps) {
   const Tag = `h${level}` as const;
 
   return (
     <Tag
       className={cn(
-        "font-display text-balance text-mar-900",
+        "font-display text-balance text-creme",
         headingClasses[level],
         className,
       )}
@@ -43,7 +39,7 @@ export function Text({ muted = false, className, ...props }: TextProps) {
     <p
       className={cn(
         "text-pretty leading-relaxed",
-        muted ? "text-carvao-500" : "text-carvao-800",
+        muted ? "text-creme/55" : "text-creme/70",
         className,
       )}
       {...props}
@@ -51,13 +47,23 @@ export function Text({ muted = false, className, ...props }: TextProps) {
   );
 }
 
-export type EyebrowProps = HTMLAttributes<HTMLSpanElement>;
+export type EyebrowTone = "mar" | "brasa";
 
-export function Eyebrow({ className, ...props }: EyebrowProps) {
+export interface EyebrowProps extends HTMLAttributes<HTMLParagraphElement> {
+  tone?: EyebrowTone;
+}
+
+const eyebrowTones: Record<EyebrowTone, string> = {
+  mar: "text-mar-400",
+  brasa: "text-brasa-400",
+};
+
+export function Eyebrow({ tone = "mar", className, ...props }: EyebrowProps) {
   return (
-    <span
+    <p
       className={cn(
-        "text-xs font-semibold uppercase tracking-[0.2em] text-brasa-600",
+        "text-[11px] uppercase tracking-[0.3em]",
+        eyebrowTones[tone],
         className,
       )}
       {...props}

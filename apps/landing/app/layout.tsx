@@ -1,17 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Barlow, Cinzel } from "next/font/google";
 
 import { siteConfig } from "@/lib/site";
 
 import "./globals.css";
 
-const sans = Inter({
+const sans = Barlow({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
   variable: "--font-sans-family",
 });
 
-const display = Playfair_Display({
+const display = Cinzel({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-display-family",
@@ -26,12 +28,12 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   applicationName: siteConfig.name,
   keywords: [
+    "churrascaria em Teresina",
     "restaurante de frutos do mar",
     "peixe na brasa",
     "camarão",
-    "mariscos",
-    "frutos do mar",
-    "restaurante à beira-mar",
+    "buffet para eventos",
+    "churrasco para eventos Teresina",
     siteConfig.name,
   ],
   alternates: {
@@ -73,7 +75,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f2e3c",
+  themeColor: "#08090b",
 };
 
 export default function RootLayout({

@@ -8,7 +8,7 @@ export function Card({ className, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-brasa border border-areia-200 bg-white shadow-mar",
+        "overflow-hidden rounded-xl border border-creme/10 bg-carvao-850",
         className,
       )}
       {...props}
@@ -22,10 +22,13 @@ export function CardHeader({ className, ...props }: CardProps) {
   );
 }
 
-export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
+export function CardTitle({
+  className,
+  ...props
+}: HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn("font-display text-xl text-mar-900", className)}
+      className={cn("font-display text-xl text-creme", className)}
       {...props}
     />
   );

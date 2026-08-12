@@ -11,9 +11,24 @@
   }
 
   body {
-    background-color: var(--color-areia-50);
-    color: var(--color-carvao-800);
+    background-color: var(--color-carvao-950);
+    color: var(--color-creme);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Links sem classe (conteúdo futuro) já nascem na cor da marca. */
+  a {
+    color: var(--color-brasa-500);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-brasa-400);
+  }
+
+  ::selection {
+    background-color: var(--color-brasa-500);
+    color: var(--color-carvao-1000);
   }
 }
