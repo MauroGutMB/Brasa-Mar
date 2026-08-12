@@ -6,6 +6,8 @@ node_modules/
 .pnpm-store/
 
 # builds
+# SQL de produção gerado por db:bundle
+packages/db/producao.sql
 .next/
 out/
 dist/
