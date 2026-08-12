@@ -1,0 +1,37 @@
+{
+  "name": "@brasamar/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Configurações compartilhadas do monorepo: TypeScript, ESLint e tema Tailwind.",
+  "files": [
+    "eslint",
+    "tailwind",
+    "tsconfig"
+  ],
+  "exports": {
+    "./eslint/base": "./eslint/base.mjs",
+    "./eslint/next": "./eslint/next.mjs",
+    "./eslint/react-library": "./eslint/react-library.mjs",
+    "./tailwind/theme.css": "./tailwind/theme.css",
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
+    "./tsconfig/react-library.json": "./tsconfig/react-library.json"
+  },
+  "scripts": {
+    "lint": "echo \"@brasamar/config: nada a lintar\" && exit 0",
+    "check-types": "echo \"@brasamar/config: sem código TS\" && exit 0"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint-config-next": "^16.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^16.5.0",
+    "typescript-eslint": "^8.67.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3"
+  }
+}

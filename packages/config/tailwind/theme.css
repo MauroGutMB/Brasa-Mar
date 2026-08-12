@@ -1,0 +1,63 @@
+/**
+ * Tema base do Brasa e Mar (Tailwind CSS v4 — configuração CSS-first).
+ *
+ * Uso, no CSS global de cada app:
+ *   @import "tailwindcss";
+ *   @import "@brasamar/config/tailwind/theme.css";
+ *
+ * Tudo que for identidade visual da marca (cores, fontes, raios, sombras)
+ * mora aqui, para que a landing e o futuro app de pedidos compartilhem o
+ * mesmo design system.
+ */
+
+@theme {
+  /* Brasa — laranja de fogo/chama, cor de destaque e CTAs */
+  --color-brasa-50: #fff5ed;
+  --color-brasa-100: #ffe7d3;
+  --color-brasa-200: #ffcba6;
+  --color-brasa-300: #ffa76f;
+  --color-brasa-400: #fb7b37;
+  --color-brasa-500: #ef5a11;
+  --color-brasa-600: #d14209;
+  --color-brasa-700: #a6300b;
+  --color-brasa-800: #85280f;
+  --color-brasa-900: #6c2411;
+
+  /* Mar — azul-petróleo profundo, cor institucional */
+  --color-mar-50: #eff8f9;
+  --color-mar-100: #d6edf1;
+  --color-mar-200: #aedbe3;
+  --color-mar-300: #79c0ce;
+  --color-mar-400: #459fb2;
+  --color-mar-500: #2a8098;
+  --color-mar-600: #22677f;
+  --color-mar-700: #1f5266;
+  --color-mar-800: #1d4353;
+  --color-mar-900: #0f2e3c;
+
+  /* Areia — tons quentes de fundo */
+  --color-areia-50: #fdfaf5;
+  --color-areia-100: #f8f1e5;
+  --color-areia-200: #f0e2cb;
+  --color-areia-300: #e3cca6;
+  --color-areia-400: #d4b27f;
+  --color-areia-500: #c39860;
+
+  /* Carvão — textos e superfícies escuras */
+  --color-carvao-50: #f6f5f4;
+  --color-carvao-100: #e7e5e2;
+  --color-carvao-300: #a8a29b;
+  --color-carvao-500: #6b6660;
+  --color-carvao-700: #3a3733;
+  --color-carvao-800: #24211e;
+  --color-carvao-900: #15120f;
+
+  /* Tipografia — as variáveis --font-*-family são injetadas por next/font */
+  --font-sans: var(--font-sans-family, ui-sans-serif, system-ui, sans-serif);
+  --font-display: var(--font-display-family, ui-serif, Georgia, serif);
+
+  /* Raios e sombras da marca */
+  --radius-brasa: 0.75rem;
+  --shadow-brasa: 0 10px 30px -12px rgb(239 90 17 / 0.35);
+  --shadow-mar: 0 10px 30px -12px rgb(15 46 60 / 0.25);
+}

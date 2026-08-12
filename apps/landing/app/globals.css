@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "@brasamar/config/tailwind/theme.css";
+
+/* Classes usadas pelos componentes de @brasamar/ui também precisam ser
+   varridas pelo Tailwind, já que vivem fora da pasta do app. */
+@source "../../../packages/ui/src";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-areia-50);
+    color: var(--color-carvao-800);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
